@@ -1,32 +1,38 @@
 import { Layout } from '@/components/Layout';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { properties } from '@/data/seed';
 import { Button } from '@/components/ui/button';
 import { Eye, Lock, ArrowLeft, Maximize, RotateCw } from 'lucide-react';
-import { useApp } from '@/store/app';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
+import { useListing } from '@/hooks/useListings';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 const VirtualTour = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const p = properties.find((x) => x.id === id);
-  const { user, walletBalance, toEscrow } = useApp();
+  const { item: p, loading } = useListing(id);
+  const { user } = useAuth();
+  const { wallet, holdEscrow } = useWallet();
   const [unlocked, setUnlocked] = useState(false);
   const [room, setRoom] = useState(0);
 
+  if (loading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
   if (!p) return <Layout><div className="container py-20 text-center">Tour not found.</div></Layout>;
 
   const fee = 2_500;
   const rooms = ['Living Room', 'Master Bedroom', 'Kitchen', 'Bathroom', 'Balcony'];
 
-  const unlock = () => {
+  const unlock = async () => {
     if (!user) { toast.error('Please sign in first'); navigate('/login'); return; }
-    if (walletBalance < fee) { toast.error('Insufficient wallet balance'); navigate('/wallet'); return; }
-    toEscrow(fee);
-    setUnlocked(true);
-    toast.success('Tour unlocked. Enjoy!');
+    if (wallet.available_balance < fee) { toast.error('Insufficient wallet balance'); navigate('/wallet'); return; }
+    try {
+      await holdEscrow(fee, `360° tour unlock — ${p.title}`);
+      setUnlocked(true);
+      toast.success('Tour unlocked. Enjoy!');
+    } catch (e: any) { toast.error(e.message); }
   };
+
 
   return (
     <Layout>

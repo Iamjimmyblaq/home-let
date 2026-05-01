@@ -1,12 +1,12 @@
-import { useSearchParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
-import { properties } from '@/data/seed';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useListings } from '@/hooks/useListings';
 
 const Listings = () => {
   const [params, setParams] = useSearchParams();
@@ -14,9 +14,10 @@ const Listings = () => {
   const [type, setType] = useState(params.get('type') || 'all');
   const [city, setCity] = useState('all');
   const [sort, setSort] = useState('relevance');
+  const { items, loading } = useListings();
 
   const filtered = useMemo(() => {
-    let r = properties;
+    let r = items;
     if (type !== 'all') r = r.filter((p) => p.type === type);
     if (city !== 'all') r = r.filter((p) => p.state === city);
     if (q.trim()) {
@@ -26,14 +27,14 @@ const Listings = () => {
     if (sort === 'low') r = [...r].sort((a, b) => a.price - b.price);
     if (sort === 'high') r = [...r].sort((a, b) => b.price - a.price);
     return r;
-  }, [q, type, city, sort]);
+  }, [items, q, type, city, sort]);
 
   return (
     <Layout>
       <div className="bg-secondary/40 border-b">
         <div className="container py-8">
           <h1 className="text-3xl font-bold mb-1">Find your next home</h1>
-          <p className="text-muted-foreground mb-6">{filtered.length} verified listings</p>
+          <p className="text-muted-foreground mb-6">{loading ? 'Loading…' : `${filtered.length} verified listings`}</p>
           <div className="bg-card rounded-2xl p-3 flex flex-col lg:flex-row gap-2 shadow-soft border">
             <div className="flex-1 flex items-center gap-2 px-3">
               <Search className="h-4 w-4 text-muted-foreground" />

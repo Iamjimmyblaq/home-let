@@ -1,42 +1,160 @@
 import { Layout } from '@/components/Layout';
-import { useApp } from '@/store/app';
-import { Link, Navigate } from 'react-router-dom';
-import { properties } from '@/data/seed';
-import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, Pencil } from 'lucide-react';
 import { naira, shortNaira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
+import { useListings } from '@/hooks/useListings';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+type Insp = { id: string; listing_id: string; user_id: string; mode: string; scheduled_at: string; status: string; fee: number };
+
+const KYCBanner = () => {
+  const { profile, refresh } = useAuth();
+  const [busy, setBusy] = useState(false);
+  if (!profile) return null;
+  if (profile.kyc_status === 'verified') return (
+    <div className="bg-success/10 border border-success/30 rounded-2xl p-4 mb-6 flex items-center gap-3">
+      <ShieldCheck className="h-5 w-5 text-success" />
+      <div className="text-sm font-medium">Your agent profile is KYC-verified.</div>
+    </div>
+  );
+  const submit = async () => {
+    setBusy(true);
+    await supabase.from('profiles').update({ kyc_status: 'pending', kyc_doc_url: 'mock://uploaded.pdf' }).eq('user_id', profile.user_id);
+    await refresh();
+    setBusy(false);
+    toast.success('KYC submitted — admin will review shortly.');
+  };
+  return (
+    <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <ShieldCheck className="h-5 w-5 text-accent" />
+        <div>
+          <div className="font-medium text-sm">KYC verification: <span className="capitalize">{profile.kyc_status}</span></div>
+          <div className="text-xs text-muted-foreground">Listings stay hidden until verified by admin.</div>
+        </div>
+      </div>
+      {profile.kyc_status !== 'pending' && <Button size="sm" onClick={submit} disabled={busy}>{busy ? 'Submitting…' : 'Submit KYC documents'}</Button>}
+    </div>
+  );
+};
+
+const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({
+    title: '', type: 'rent', price: '', bedrooms: '2', bathrooms: '2', area: '120',
+    location: '', city: '', state: 'Lagos', description: '', amenities: '', image: '', tour: '',
+  });
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setBusy(true);
+    const { error } = await supabase.from('listings').insert({
+      agent_id: user.id, title: f.title, type: f.type as any, price: Number(f.price),
+      bedrooms: +f.bedrooms, bathrooms: +f.bathrooms, area_sqm: +f.area,
+      location: f.location, city: f.city, state: f.state, description: f.description,
+      amenities: f.amenities.split(',').map((s) => s.trim()).filter(Boolean),
+      images: f.image ? [f.image] : [],
+      tour_url: f.tour || null,
+      status: 'pending',
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Listing submitted — pending admin verification.');
+    setOpen(false); onCreated();
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button size="lg"><Plus className="h-4 w-4" /> New listing</Button></DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Create a new listing</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div><Label>Title</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} required /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Type</Label><Select value={f.type} onValueChange={(v) => setF({ ...f, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="rent">For Rent</SelectItem><SelectItem value="sale">For Sale</SelectItem><SelectItem value="shortlet">Short-let</SelectItem></SelectContent></Select></div>
+            <div><Label>Price (₦)</Label><Input type="number" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} required /></div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Beds</Label><Input type="number" value={f.bedrooms} onChange={(e) => setF({ ...f, bedrooms: e.target.value })} /></div>
+            <div><Label>Baths</Label><Input type="number" value={f.bathrooms} onChange={(e) => setF({ ...f, bathrooms: e.target.value })} /></div>
+            <div><Label>Area (m²)</Label><Input type="number" value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })} /></div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required placeholder="Lekki Phase 1" /></div>
+            <div><Label>City</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder="Lekki" /></div>
+            <div><Label>State</Label><Select value={f.state} onValueChange={(v) => setF({ ...f, state: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Lagos">Lagos</SelectItem><SelectItem value="Abuja">Abuja</SelectItem><SelectItem value="Rivers">Rivers</SelectItem></SelectContent></Select></div>
+          </div>
+          <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={3} /></div>
+          <div><Label>Amenities (comma separated)</Label><Input value={f.amenities} onChange={(e) => setF({ ...f, amenities: e.target.value })} placeholder="Pool, Gym, Security" /></div>
+          <div><Label>Cover image URL</Label><Input value={f.image} onChange={(e) => setF({ ...f, image: e.target.value })} placeholder="https://..." /></div>
+          <div><Label>360° tour URL (optional)</Label><Input value={f.tour} onChange={(e) => setF({ ...f, tour: e.target.value })} placeholder="https://..." /></div>
+          <DialogFooter><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Submit for review'}</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const AgentDashboard = () => {
-  const { user, walletBalance } = useApp();
-  if (!user) return <Navigate to="/login" />;
+  const { user } = useAuth();
+  const { wallet } = useWallet();
+  const { items: listings, reload } = useListings({ agentId: user?.id });
+  const [inspections, setInspections] = useState<Insp[]>([]);
 
-  // pretend the agent owns first 4 listings
-  const listings = properties.slice(0, 4);
-  const inspections = [
-    { id: 'i1', property: listings[0], client: 'Tomi A.', date: '2026-05-04 14:00', status: 'Confirmed' },
-    { id: 'i2', property: listings[1], client: 'Jane K.', date: '2026-05-05 10:00', status: 'Pending' },
-    { id: 'i3', property: listings[2], client: 'Femi O.', date: '2026-05-06 16:00', status: 'Confirmed' },
-  ];
+  const loadInsp = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('inspections').select('*').eq('agent_id', user.id).order('scheduled_at', { ascending: true });
+    setInspections((data as any) || []);
+  };
+  useEffect(() => { loadInsp(); }, [user]);
+
+  const updateInsp = async (id: string, status: string) => {
+    await supabase.from('inspections').update({ status }).eq('id', id);
+    loadInsp();
+    toast.success(`Inspection ${status}`);
+  };
+
+  const deleteListing = async (id: string) => {
+    if (!confirm('Delete this listing?')) return;
+    await supabase.from('listings').delete().eq('id', id);
+    reload();
+    toast.success('Listing removed');
+  };
+
+  const titleOf = (lid: string) => listings.find((l) => l.id === lid)?.title || 'Property';
+  const pending = inspections.filter((i) => i.status === 'pending').length;
 
   return (
     <Layout>
       <div className="container py-10">
+        <KYCBanner />
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold">Agent dashboard</h1>
             <p className="text-muted-foreground">Manage listings, inspections and earnings.</p>
           </div>
-          <Button size="lg"><Plus className="h-4 w-4" /> New listing</Button>
+          <NewListingDialog onCreated={reload} />
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { icon: Building2, label: 'Active listings', v: listings.length, color: 'text-primary bg-primary/10' },
-            { icon: Calendar, label: 'Pending inspections', v: 2, color: 'text-accent bg-accent/20' },
-            { icon: Eye, label: 'Views (30d)', v: '1,284', color: 'text-success bg-success/10' },
-            { icon: Wallet, label: 'Earnings', v: naira(walletBalance + 1_250_000), color: 'text-primary bg-primary/10' },
+            { icon: Building2, label: 'My listings', v: listings.length, color: 'text-primary bg-primary/10' },
+            { icon: Calendar, label: 'Pending inspections', v: pending, color: 'text-accent bg-accent/20' },
+            { icon: Eye, label: 'Confirmed', v: inspections.filter((i) => i.status === 'confirmed').length, color: 'text-success bg-success/10' },
+            { icon: Wallet, label: 'Wallet', v: naira(wallet.available_balance), color: 'text-primary bg-primary/10' },
           ].map((s) => (
             <div key={s.label} className="bg-card border rounded-2xl p-5 shadow-soft">
               <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}><s.icon className="h-5 w-5" /></div>
@@ -54,41 +172,47 @@ const AgentDashboard = () => {
           </TabsList>
           <TabsContent value="listings" className="mt-4">
             <div className="bg-card border rounded-2xl overflow-hidden">
+              {listings.length === 0 && <div className="p-8 text-center text-muted-foreground">No listings yet — create one to get started.</div>}
               {listings.map((p) => (
-                <Link to={`/property/${p.id}`} key={p.id} className="flex items-center gap-4 p-4 border-b last:border-0 hover:bg-secondary/30 transition-colors">
-                  <img src={p.image} className="h-16 w-16 rounded-lg object-cover" />
-                  <div className="flex-1">
+                <div key={p.id} className="flex items-center gap-4 p-4 border-b last:border-0 hover:bg-secondary/30 transition-colors">
+                  <Link to={`/property/${p.id}`}><img src={p.image} className="h-16 w-16 rounded-lg object-cover" /></Link>
+                  <Link to={`/property/${p.id}`} className="flex-1">
                     <div className="font-medium">{p.title}</div>
                     <div className="text-xs text-muted-foreground">{p.location} · {p.type}</div>
-                  </div>
+                  </Link>
                   <div className="text-right">
                     <div className="font-bold text-primary">{shortNaira(p.price)}</div>
-                    <Badge variant="secondary" className="text-xs">Active</Badge>
+                    <Badge variant={p.verified ? 'default' : 'secondary'} className="text-xs">{p.verified ? 'Verified' : 'Pending'}</Badge>
                   </div>
-                </Link>
+                  <Button size="icon" variant="ghost" onClick={() => deleteListing(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </div>
               ))}
             </div>
           </TabsContent>
           <TabsContent value="inspections" className="mt-4">
             <div className="bg-card border rounded-2xl overflow-hidden">
+              {inspections.length === 0 && <div className="p-8 text-center text-muted-foreground">No inspection requests yet.</div>}
               {inspections.map((i) => (
                 <div key={i.id} className="flex items-center gap-4 p-4 border-b last:border-0">
-                  <img src={i.property.image} className="h-12 w-12 rounded-lg object-cover" />
                   <div className="flex-1">
-                    <div className="font-medium text-sm">{i.property.title}</div>
-                    <div className="text-xs text-muted-foreground">{i.client} · {i.date}</div>
+                    <div className="font-medium text-sm">{titleOf(i.listing_id)}</div>
+                    <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode} · {naira(i.fee)}</div>
                   </div>
-                  <Badge className={i.status === 'Confirmed' ? 'bg-success text-success-foreground' : 'bg-accent text-accent-foreground'}>{i.status}</Badge>
-                  {i.status === 'Pending' && <Button size="sm">Accept</Button>}
+                  <Badge className={i.status === 'confirmed' ? 'bg-success text-success-foreground' : i.status === 'pending' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-foreground'}>{i.status}</Badge>
+                  {i.status === 'pending' && <>
+                    <Button size="sm" onClick={() => updateInsp(i.id, 'confirmed')}>Accept</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateInsp(i.id, 'cancelled')}>Decline</Button>
+                  </>}
+                  {i.status === 'confirmed' && <Button size="sm" variant="outline" onClick={() => updateInsp(i.id, 'completed')}>Mark done</Button>}
                 </div>
               ))}
             </div>
           </TabsContent>
           <TabsContent value="earnings" className="mt-4">
             <div className="bg-card border rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-2"><TrendingUp className="h-5 w-5 text-success" /><span className="font-semibold">Last 30 days</span></div>
-              <div className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: 'Sora' }}>{naira(1_250_000)}</div>
-              <div className="text-sm text-muted-foreground">+18% vs previous period</div>
+              <div className="flex items-center gap-2 mb-2"><TrendingUp className="h-5 w-5 text-success" /><span className="font-semibold">Wallet balance</span></div>
+              <div className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: 'Sora' }}>{naira(wallet.available_balance)}</div>
+              <div className="text-sm text-muted-foreground">Earnings are paid out weekly. 60% revenue share on completed bookings.</div>
             </div>
           </TabsContent>
         </Tabs>

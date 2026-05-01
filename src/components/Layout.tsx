@@ -1,19 +1,24 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Search, Building2, Hotel, Wallet, MessageSquare, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
-import { useApp } from '@/store/app';
+import { Home, Wallet, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { naira } from '@/lib/format';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
 
 export const Navbar = () => {
-  const { user, logout, walletBalance } = useApp();
+  const { user, profile, role, signOut } = useAuth();
+  const { wallet } = useWallet();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const dashHref = user?.role === 'admin' ? '/admin' : user?.role === 'agent' ? '/agent' : '/dashboard';
+  const dashHref = role === 'admin' ? '/admin' : role === 'agent' ? '/agent' : '/dashboard';
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || '';
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
     `text-sm font-medium transition-colors ${isActive ? 'text-primary' : 'text-foreground/70 hover:text-foreground'}`;
+
+  const handleSignOut = async () => { await signOut(); navigate('/'); };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -37,14 +42,14 @@ export const Navbar = () => {
             <>
               <Link to="/wallet" className="flex items-center gap-2 px-3 h-9 rounded-lg bg-secondary text-sm font-medium">
                 <Wallet className="h-4 w-4 text-primary" />
-                {naira(walletBalance)}
+                {naira(wallet.available_balance)}
               </Link>
               <Link to={dashHref}>
                 <Button variant="outline" size="sm">
-                  <UserIcon className="h-4 w-4" /> {user.name}
+                  <UserIcon className="h-4 w-4" /> {displayName}
                 </Button>
               </Link>
-              <Button size="sm" variant="ghost" onClick={() => { logout(); navigate('/'); }}>
+              <Button size="sm" variant="ghost" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
               </Button>
             </>
@@ -70,8 +75,9 @@ export const Navbar = () => {
             <NavLink to="/contact" className={linkCls} onClick={() => setOpen(false)}>Contact</NavLink>
             {user ? (
               <>
-                <Link to="/wallet" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Wallet · {naira(walletBalance)}</Button></Link>
+                <Link to="/wallet" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Wallet · {naira(wallet.available_balance)}</Button></Link>
                 <Link to={dashHref} onClick={() => setOpen(false)}><Button className="w-full">Dashboard</Button></Link>
+                <Button variant="ghost" className="w-full" onClick={handleSignOut}>Sign out</Button>
               </>
             ) : (
               <>
@@ -112,8 +118,6 @@ export const Footer = () => (
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li><Link to="/contact">Contact</Link></li>
           <li><Link to="/contact">Support</Link></li>
-          <li><a>Terms</a></li>
-          <li><a>Privacy</a></li>
         </ul>
       </div>
       <div>

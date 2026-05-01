@@ -3,7 +3,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, ShieldCheck, Wallet, Eye, Star, ArrowRight, Building2, KeyRound, Hotel } from 'lucide-react';
-import { properties } from '@/data/seed';
+import { seedUnified } from '@/data/seedUnified';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 const Index = () => {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
-  const featured = properties.slice(0, 4);
+  const featured = seedUnified.slice(0, 4);
 
   return (
     <Layout>
