@@ -1,21 +1,39 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
-import { properties, agents } from '@/data/seed';
-import { naira, shortNaira } from '@/lib/format';
+import { naira } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BedDouble, Bath, Maximize, MapPin, ShieldCheck, Eye, MessageSquare, Calendar, Phone, Star, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useListing } from '@/hooks/useListings';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const p = properties.find((x) => x.id === id);
+  const { item: p, loading } = useListing(id);
+  const { user } = useAuth();
   const [active, setActive] = useState(0);
 
+  if (loading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
   if (!p) return <Layout><div className="container py-20 text-center">Property not found.</div></Layout>;
-  const agent = agents.find((a) => a.id === p.agentId)!;
+
   const priceLabel = p.type === 'rent' ? `${naira(p.price)}/year` : p.type === 'shortlet' ? `${naira(p.price)}/night` : naira(p.price);
+
+  const messageAgent = async () => {
+    if (!user) { navigate('/login'); return; }
+    if (p.source !== 'db') { navigate('/chat'); return; }
+    const { data: existing } = await supabase.from('chat_threads').select('id').eq('user_id', user.id).eq('agent_id', p.agentId).eq('listing_id', p.id).maybeSingle();
+    let threadId = existing?.id;
+    if (!threadId) {
+      const { data, error } = await supabase.from('chat_threads').insert({ user_id: user.id, agent_id: p.agentId, listing_id: p.id }).select('id').single();
+      if (error) { toast.error(error.message); return; }
+      threadId = data.id;
+    }
+    navigate(`/chat?thread=${threadId}`);
+  };
 
   return (
     <Layout>
@@ -24,10 +42,9 @@ const PropertyDetail = () => {
           <Link to="/" className="hover:text-foreground">Home</Link> / <Link to="/listings" className="hover:text-foreground">Listings</Link> / <span className="text-foreground">{p.title}</span>
         </div>
 
-        {/* Gallery */}
         <div className="grid md:grid-cols-4 gap-3 mb-8">
           <div className="md:col-span-3 aspect-[16/10] rounded-2xl overflow-hidden bg-muted">
-            <img src={p.gallery[active]} alt={p.title} className="w-full h-full object-cover" />
+            <img src={p.gallery[active] || p.image} alt={p.title} className="w-full h-full object-cover" />
           </div>
           <div className="grid grid-cols-4 md:grid-cols-1 gap-3">
             {p.gallery.slice(0, 4).map((g, i) => (
@@ -39,7 +56,6 @@ const PropertyDetail = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main */}
           <div className="lg:col-span-2 space-y-8">
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
@@ -48,14 +64,14 @@ const PropertyDetail = () => {
                 {p.hasVirtualTour && <Badge className="bg-accent text-accent-foreground"><Eye className="h-3 w-3 mr-1" />360° Available</Badge>}
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">{p.title}</h1>
-              <div className="flex items-center text-muted-foreground gap-1"><MapPin className="h-4 w-4" />{p.location}, {p.city}, {p.state}</div>
+              <div className="flex items-center text-muted-foreground gap-1"><MapPin className="h-4 w-4" />{p.location}{p.city ? `, ${p.city}` : ''}{p.state ? `, ${p.state}` : ''}</div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               {[
                 { icon: BedDouble, label: 'Bedrooms', v: p.beds },
                 { icon: Bath, label: 'Bathrooms', v: p.baths },
-                { icon: Maximize, label: 'Area', v: `${p.sqm} m²` },
+                { icon: Maximize, label: 'Area', v: p.sqm > 0 ? `${p.sqm} m²` : '—' },
               ].map((s) => (
                 <div key={s.label} className="bg-secondary/50 rounded-xl p-4 text-center">
                   <s.icon className="h-5 w-5 mx-auto mb-1 text-primary" />
@@ -70,14 +86,16 @@ const PropertyDetail = () => {
               <p className="text-muted-foreground leading-relaxed">{p.description}</p>
             </div>
 
-            <div>
-              <h2 className="text-xl font-bold mb-3">Features & Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {p.features.map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" />{f}</div>
-                ))}
+            {p.features.length > 0 && (
+              <div>
+                <h2 className="text-xl font-bold mb-3">Features & Amenities</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {p.features.map((f) => (
+                    <div key={f} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" />{f}</div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {p.hasVirtualTour && (
               <div className="rounded-2xl gradient-hero text-primary-foreground p-8 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -92,7 +110,6 @@ const PropertyDetail = () => {
             )}
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-4">
             <div className="bg-card border rounded-2xl p-6 shadow-soft sticky top-20">
               <div className="text-sm text-muted-foreground">Listed price</div>
@@ -103,23 +120,21 @@ const PropertyDetail = () => {
               <Button onClick={() => navigate(`/booking/${p.id}`)} variant="outline" className="w-full mb-2" size="lg">
                 {p.type === 'shortlet' ? 'Reserve now' : 'Make an offer'}
               </Button>
-              <Button onClick={() => navigate('/chat')} variant="ghost" className="w-full" size="lg">
+              <Button onClick={messageAgent} variant="ghost" className="w-full" size="lg">
                 <MessageSquare className="h-4 w-4" /> Message agent
               </Button>
 
               <div className="border-t mt-6 pt-6">
-                <Link to={`/agent-profile/${agent.id}`} className="flex items-center gap-3 group">
-                  <img src={agent.avatar} alt={agent.name} className="h-12 w-12 rounded-full object-cover" />
+                <div className="flex items-center gap-3">
+                  {p.agentAvatar && <img src={p.agentAvatar} alt={p.agentName} className="h-12 w-12 rounded-full object-cover" />}
                   <div className="flex-1">
-                    <div className="font-semibold flex items-center gap-1 group-hover:text-primary">
-                      {agent.name} {agent.verified && <ShieldCheck className="h-3.5 w-3.5 text-success" />}
+                    <div className="font-semibold flex items-center gap-1">
+                      {p.agentName} {p.agentVerified && <ShieldCheck className="h-3.5 w-3.5 text-success" />}
                     </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-accent text-accent" />{agent.rating} · {agent.reviews} reviews
-                    </div>
+                    <div className="text-xs text-muted-foreground">{p.agentAgency}</div>
                   </div>
-                </Link>
-                <Button variant="outline" size="sm" className="w-full mt-3"><Phone className="h-3 w-3" /> {agent.phone}</Button>
+                </div>
+                {p.agentPhone && <Button variant="outline" size="sm" className="w-full mt-3"><Phone className="h-3 w-3" /> {p.agentPhone}</Button>}
               </div>
 
               <div className="mt-4 p-3 bg-secondary/50 rounded-lg text-xs text-muted-foreground flex gap-2">

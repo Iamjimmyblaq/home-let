@@ -1,26 +1,40 @@
 import { Layout } from '@/components/Layout';
-import { useApp } from '@/store/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { naira } from '@/lib/format';
 import { Wallet as WalletIcon, ShieldCheck, ArrowDown, ArrowUp, Plus, CreditCard, Smartphone } from 'lucide-react';
-import { seedTransactions } from '@/data/seed';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
+import { supabase } from '@/integrations/supabase/client';
+
+type Txn = { id: string; type: string; amount: number; description: string | null; created_at: string };
 
 const Wallet = () => {
-  const { walletBalance, escrowBalance, fundWallet, user } = useApp();
+  const { user, loading: authLoading } = useAuth();
+  const { wallet, fund } = useWallet();
   const [amt, setAmt] = useState('50000');
+  const [txns, setTxns] = useState<Txn[]>([]);
 
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50)
+      .then(({ data }) => setTxns((data as any) || []));
+  }, [user, wallet.available_balance, wallet.escrow_balance]);
+
+  if (authLoading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
   if (!user) return <Layout><div className="container py-20 text-center">Please sign in to access your wallet.</div></Layout>;
 
-  const fund = () => {
+  const handleFund = async () => {
     const n = Number(amt);
     if (!n || n <= 0) return;
-    fundWallet(n);
+    await fund(n);
     toast.success(`Wallet funded with ${naira(n)}`);
   };
+
+  const labelOf = (t: string) => t === 'fund' ? 'Top-up' : t === 'escrow_hold' ? 'Held in escrow' : t === 'escrow_release' ? 'Released' : t === 'refund' ? 'Refund' : 'Payout';
 
   return (
     <Layout>
@@ -30,12 +44,12 @@ const Wallet = () => {
           <div className="md:col-span-2 rounded-2xl gradient-hero text-primary-foreground p-8 shadow-elegant relative overflow-hidden">
             <WalletIcon className="absolute right-6 top-6 h-8 w-8 opacity-30" />
             <div className="text-white/70 text-sm">Available balance</div>
-            <div className="text-4xl font-bold my-2" style={{ fontFamily: 'Sora' }}>{naira(walletBalance)}</div>
+            <div className="text-4xl font-bold my-2" style={{ fontFamily: 'Sora' }}>{naira(wallet.available_balance)}</div>
             <div className="text-xs text-white/70">Home-let Wallet · NGN</div>
           </div>
           <div className="bg-card border rounded-2xl p-6 shadow-soft">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ShieldCheck className="h-4 w-4 text-success" /> In escrow</div>
-            <div className="text-2xl font-bold" style={{ fontFamily: 'Sora' }}>{naira(escrowBalance)}</div>
+            <div className="text-2xl font-bold" style={{ fontFamily: 'Sora' }}>{naira(wallet.escrow_balance)}</div>
             <div className="text-xs text-muted-foreground mt-2">Held until you confirm transactions.</div>
           </div>
         </div>
@@ -47,7 +61,7 @@ const Wallet = () => {
           </TabsList>
           <TabsContent value="fund" className="bg-card border rounded-2xl p-6 mt-4">
             <h3 className="font-semibold mb-4">Add funds</h3>
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               {[10000, 50000, 100000, 250000].map((v) => (
                 <Button key={v} variant="outline" size="sm" onClick={() => setAmt(String(v))}>{naira(v)}</Button>
               ))}
@@ -57,19 +71,20 @@ const Wallet = () => {
               <button className="p-4 border-2 border-primary rounded-xl text-left flex items-center gap-3"><CreditCard className="h-5 w-5 text-primary" /><div><div className="font-medium text-sm">Card</div><div className="text-xs text-muted-foreground">Visa, Master, Verve</div></div></button>
               <button className="p-4 border-2 rounded-xl text-left flex items-center gap-3"><Smartphone className="h-5 w-5" /><div><div className="font-medium text-sm">Bank transfer</div><div className="text-xs text-muted-foreground">Paystack / Flutterwave</div></div></button>
             </div>
-            <Button size="lg" className="w-full" onClick={fund}><Plus className="h-4 w-4" /> Fund {naira(Number(amt) || 0)}</Button>
+            <Button size="lg" className="w-full" onClick={handleFund}><Plus className="h-4 w-4" /> Fund {naira(Number(amt) || 0)}</Button>
           </TabsContent>
           <TabsContent value="history" className="bg-card border rounded-2xl p-6 mt-4">
             <div className="space-y-3">
-              {seedTransactions.map((t) => (
+              {txns.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No transactions yet.</p>}
+              {txns.map((t) => (
                 <div key={t.id} className="flex items-center justify-between p-3 border rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${t.type === 'fund' ? 'bg-success/10 text-success' : t.type === 'escrow' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary'}`}>
-                      {t.type === 'fund' ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${t.type === 'fund' ? 'bg-success/10 text-success' : t.type === 'escrow_hold' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary'}`}>
+                      {t.type === 'fund' || t.type === 'escrow_release' ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
                     </div>
                     <div>
-                      <div className="font-medium text-sm">{t.desc}</div>
-                      <div className="text-xs text-muted-foreground">{t.date} · {t.status}</div>
+                      <div className="font-medium text-sm">{t.description || labelOf(t.type)}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleDateString()} · {labelOf(t.type)}</div>
                     </div>
                   </div>
                   <div className="font-semibold">{naira(t.amount)}</div>

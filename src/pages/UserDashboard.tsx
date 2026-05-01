@@ -1,34 +1,55 @@
 import { Layout } from '@/components/Layout';
-import { useApp } from '@/store/app';
-import { Link, Navigate } from 'react-router-dom';
-import { properties } from '@/data/seed';
+import { Link } from 'react-router-dom';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Calendar, Heart, Wallet, MessageSquare, Eye, ShieldCheck } from 'lucide-react';
 import { naira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useListings } from '@/hooks/useListings';
+
+type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string };
+type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | null; check_in: string; check_out: string; status: string; total_amount: number };
 
 const UserDashboard = () => {
-  const { user, walletBalance, escrowBalance, favorites } = useApp();
-  if (!user) return <Navigate to="/login" />;
+  const { user, profile } = useAuth();
+  const { wallet } = useWallet();
+  const { favorites } = useFavorites();
+  const { items } = useListings();
+  const [inspections, setInspections] = useState<InspectionRow[]>([]);
+  const [bookings, setBookings] = useState<BookingRow[]>([]);
 
-  const favs = properties.filter((p) => favorites.includes(p.id));
-  const inspections = [
-    { id: 'i1', property: properties[0], date: '2026-05-04', time: '14:00', mode: 'Physical', status: 'Confirmed' },
-    { id: 'i2', property: properties[2], date: '2026-05-08', time: '11:00', mode: 'Virtual', status: 'Pending' },
-  ];
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const [{ data: ins }, { data: bk }] = await Promise.all([
+        supabase.from('inspections').select('id,listing_id,mode,scheduled_at,status').eq('user_id', user.id).order('scheduled_at', { ascending: true }),
+        supabase.from('bookings').select('id,listing_id,hotel_ref,check_in,check_out,status,total_amount').eq('user_id', user.id).order('check_in', { ascending: true }),
+      ]);
+      setInspections((ins as any) || []);
+      setBookings((bk as any) || []);
+    })();
+  }, [user]);
+
+  const favs = useMemo(() => items.filter((p) => favorites.includes(p.id)), [items, favorites]);
+  const titleOf = (lid: string) => items.find((i) => i.id === lid)?.title || 'Property';
 
   return (
     <Layout>
       <div className="container py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Welcome back, {user.name} 👋</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || user?.email} 👋</h1>
           <p className="text-muted-foreground">Here's what's happening on your account.</p>
         </div>
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { icon: Wallet, label: 'Wallet', v: naira(walletBalance), href: '/wallet', color: 'text-primary bg-primary/10' },
-            { icon: ShieldCheck, label: 'In escrow', v: naira(escrowBalance), href: '/wallet', color: 'text-success bg-success/10' },
+            { icon: Wallet, label: 'Wallet', v: naira(wallet.available_balance), href: '/wallet', color: 'text-primary bg-primary/10' },
+            { icon: ShieldCheck, label: 'In escrow', v: naira(wallet.escrow_balance), href: '/wallet', color: 'text-success bg-success/10' },
             { icon: Calendar, label: 'Inspections', v: inspections.length, href: '#', color: 'text-accent bg-accent/20' },
             { icon: Heart, label: 'Saved homes', v: favs.length, href: '/listings', color: 'text-destructive bg-destructive/10' },
           ].map((s) => (
@@ -43,16 +64,31 @@ const UserDashboard = () => {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 bg-card border rounded-2xl p-6">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />Upcoming inspections</h2>
+            {inspections.length === 0 && <p className="text-sm text-muted-foreground">No inspections yet.</p>}
             {inspections.map((i) => (
               <div key={i.id} className="flex items-center gap-4 p-3 border rounded-xl mb-3">
-                <img src={i.property.image} className="h-16 w-16 rounded-lg object-cover" />
                 <div className="flex-1">
-                  <div className="font-medium text-sm">{i.property.title}</div>
-                  <div className="text-xs text-muted-foreground">{i.date} at {i.time} · {i.mode}</div>
+                  <div className="font-medium text-sm">{titleOf(i.listing_id)}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode}</div>
                 </div>
-                <Badge className={i.status === 'Confirmed' ? 'bg-success text-success-foreground' : 'bg-accent text-accent-foreground'}>{i.status}</Badge>
+                <Badge className={i.status === 'confirmed' ? 'bg-success text-success-foreground' : 'bg-accent text-accent-foreground'}>{i.status}</Badge>
               </div>
             ))}
+            {bookings.length > 0 && (
+              <>
+                <h3 className="font-semibold mt-6 mb-2 text-sm">Bookings</h3>
+                {bookings.map((b) => (
+                  <div key={b.id} className="flex items-center gap-4 p-3 border rounded-xl mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{b.listing_id ? titleOf(b.listing_id) : (b.hotel_ref || 'Stay')}</div>
+                      <div className="text-xs text-muted-foreground">{b.check_in} → {b.check_out}</div>
+                    </div>
+                    <div className="text-sm font-semibold">{naira(b.total_amount)}</div>
+                    <Badge variant="secondary">{b.status}</Badge>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
           <div className="bg-card border rounded-2xl p-6">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" />Quick actions</h2>
