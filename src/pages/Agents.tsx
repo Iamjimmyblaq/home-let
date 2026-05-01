@@ -1,5 +1,6 @@
 import { Layout } from '@/components/Layout';
-import { agents, properties } from '@/data/seed';
+import { agents } from '@/data/seed';
+import { seedUnified } from '@/data/seedUnified';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +39,7 @@ export const AgentProfile = () => {
   const { id } = useParams();
   const a = agents.find((x) => x.id === id);
   if (!a) return <Layout><div className="container py-20 text-center">Agent not found.</div></Layout>;
-  const listings = properties.filter((p) => p.agentId === a.id);
+  const listings = seedUnified.filter((p) => p.agentId === a.id);
   return (
     <Layout>
       <div className="gradient-hero text-primary-foreground">
