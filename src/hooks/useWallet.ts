@@ -26,22 +26,22 @@ export const useWallet = () => {
     await load();
   };
 
-  const holdEscrow = async (amount: number, description: string, referenceId?: string) => {
-    if (!user) throw new Error('Not signed in');
-    if (wallet.available_balance < amount) throw new Error('Insufficient balance');
-    const next = { available_balance: wallet.available_balance - amount, escrow_balance: wallet.escrow_balance + amount };
-    await supabase.from('wallets').update(next).eq('user_id', user.id);
-    await supabase.from('transactions').insert({ user_id: user.id, type: 'escrow_hold', amount, description, reference_id: referenceId ?? null });
+  const callEscrow = async (body: any) => {
+    const { data, error } = await supabase.functions.invoke('escrow', { body });
+    if (error) throw new Error(error.message);
+    if ((data as any)?.error) throw new Error((data as any).error);
     await load();
+    return data;
   };
 
-  const releaseEscrow = async (amount: number, description: string) => {
-    if (!user) return;
-    const next = { escrow_balance: Math.max(0, wallet.escrow_balance - amount) };
-    await supabase.from('wallets').update(next).eq('user_id', user.id);
-    await supabase.from('transactions').insert({ user_id: user.id, type: 'escrow_release', amount, description });
-    await load();
-  };
+  const holdEscrow = (amount: number, description: string, referenceId?: string) =>
+    callEscrow({ action: 'hold', amount, description, reference_id: referenceId });
 
-  return { wallet, loading, fund, holdEscrow, releaseEscrow, reload: load };
+  const releaseEscrow = (amount: number, payee_user_id: string, description: string, referenceId?: string) =>
+    callEscrow({ action: 'release', amount, payee_user_id, description, reference_id: referenceId });
+
+  const refundEscrow = (amount: number, description: string, referenceId?: string) =>
+    callEscrow({ action: 'refund', amount, description, reference_id: referenceId });
+
+  return { wallet, loading, fund, holdEscrow, releaseEscrow, refundEscrow, reload: load };
 };
