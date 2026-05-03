@@ -20,18 +20,21 @@ import { toast } from 'sonner';
 type Insp = { id: string; listing_id: string; user_id: string; mode: string; scheduled_at: string; status: string; fee: number };
 
 const KYCBanner = () => {
-  const { profile, refresh } = useAuth();
+  const { profile, user, refresh } = useAuth();
   const [busy, setBusy] = useState(false);
-  if (!profile) return null;
+  if (!profile || !user) return null;
   if (profile.kyc_status === 'verified') return (
     <div className="bg-success/10 border border-success/30 rounded-2xl p-4 mb-6 flex items-center gap-3">
       <ShieldCheck className="h-5 w-5 text-success" />
       <div className="text-sm font-medium">Your agent profile is KYC-verified.</div>
     </div>
   );
-  const submit = async () => {
+  const onUpload = async (file: File) => {
     setBusy(true);
-    await supabase.from('profiles').update({ kyc_status: 'pending', kyc_doc_url: 'mock://uploaded.pdf' }).eq('user_id', profile.user_id);
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from('kyc-docs').upload(path, file, { upsert: true });
+    if (upErr) { toast.error(upErr.message); setBusy(false); return; }
+    await supabase.from('profiles').update({ kyc_status: 'pending', kyc_doc_url: path }).eq('user_id', user.id);
     await refresh();
     setBusy(false);
     toast.success('KYC submitted — admin will review shortly.');
@@ -42,10 +45,15 @@ const KYCBanner = () => {
         <ShieldCheck className="h-5 w-5 text-accent" />
         <div>
           <div className="font-medium text-sm">KYC verification: <span className="capitalize">{profile.kyc_status}</span></div>
-          <div className="text-xs text-muted-foreground">Listings stay hidden until verified by admin.</div>
+          <div className="text-xs text-muted-foreground">Upload a government ID (PDF/JPG/PNG). Listings stay hidden until verified.</div>
         </div>
       </div>
-      {profile.kyc_status !== 'pending' && <Button size="sm" onClick={submit} disabled={busy}>{busy ? 'Submitting…' : 'Submit KYC documents'}</Button>}
+      {profile.kyc_status !== 'pending' && (
+        <label className="inline-flex">
+          <input type="file" className="hidden" accept="image/*,.pdf" disabled={busy} onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
+          <Button size="sm" disabled={busy} asChild><span>{busy ? 'Uploading…' : 'Upload KYC document'}</span></Button>
+        </label>
+      )}
     </div>
   );
 };
