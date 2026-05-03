@@ -5,6 +5,7 @@ import { naira } from '@/lib/format';
 import { Wallet as WalletIcon, ShieldCheck, ArrowDown, ArrowUp, Plus, CreditCard, Smartphone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
@@ -14,9 +15,11 @@ type Txn = { id: string; type: string; amount: number; description: string | nul
 
 const Wallet = () => {
   const { user, loading: authLoading } = useAuth();
-  const { wallet, fund } = useWallet();
+  const { wallet, reload } = useWallet();
   const [amt, setAmt] = useState('50000');
   const [txns, setTxns] = useState<Txn[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [params, setParams] = useSearchParams();
 
   useEffect(() => {
     if (!user) return;
@@ -24,14 +27,40 @@ const Wallet = () => {
       .then(({ data }) => setTxns((data as any) || []));
   }, [user, wallet.available_balance, wallet.escrow_balance]);
 
+  // Verify Paystack on return
+  useEffect(() => {
+    const reference = params.get('reference') || params.get('trxref');
+    if (!reference || !user) return;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke('paystack-verify', { body: { reference } });
+      if (error || (data as any)?.error) toast.error((data as any)?.error || error?.message || 'Verification failed');
+      else {
+        toast.success((data as any)?.already ? 'Payment already credited' : `Wallet funded with ${naira((data as any).amount)}`);
+        await reload();
+      }
+      params.delete('reference'); params.delete('trxref');
+      setParams(params, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   if (authLoading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
   if (!user) return <Layout><div className="container py-20 text-center">Please sign in to access your wallet.</div></Layout>;
 
   const handleFund = async () => {
     const n = Number(amt);
-    if (!n || n <= 0) return;
-    await fund(n);
-    toast.success(`Wallet funded with ${naira(n)}`);
+    if (!n || n < 100) { toast.error('Minimum ₦100'); return; }
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('paystack-initialize', {
+        body: { amount: n, callback_url: `${window.location.origin}/wallet` },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+      window.location.href = (data as any).authorization_url;
+    } catch (e: any) {
+      toast.error(e.message || 'Could not start payment');
+      setBusy(false);
+    }
   };
 
   const labelOf = (t: string) => t === 'fund' ? 'Top-up' : t === 'escrow_hold' ? 'Held in escrow' : t === 'escrow_release' ? 'Released' : t === 'refund' ? 'Refund' : 'Payout';
@@ -71,7 +100,7 @@ const Wallet = () => {
               <button className="p-4 border-2 border-primary rounded-xl text-left flex items-center gap-3"><CreditCard className="h-5 w-5 text-primary" /><div><div className="font-medium text-sm">Card</div><div className="text-xs text-muted-foreground">Visa, Master, Verve</div></div></button>
               <button className="p-4 border-2 rounded-xl text-left flex items-center gap-3"><Smartphone className="h-5 w-5" /><div><div className="font-medium text-sm">Bank transfer</div><div className="text-xs text-muted-foreground">Paystack / Flutterwave</div></div></button>
             </div>
-            <Button size="lg" className="w-full" onClick={handleFund}><Plus className="h-4 w-4" /> Fund {naira(Number(amt) || 0)}</Button>
+            <Button size="lg" className="w-full" onClick={handleFund} disabled={busy}><Plus className="h-4 w-4" /> {busy ? 'Redirecting to Paystack…' : `Fund ${naira(Number(amt) || 0)} via Paystack`}</Button>
           </TabsContent>
           <TabsContent value="history" className="bg-card border rounded-2xl p-6 mt-4">
             <div className="space-y-3">
