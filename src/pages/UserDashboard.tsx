@@ -11,6 +11,8 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useListings } from '@/hooks/useListings';
+import { BackButton } from '@/components/BackButton';
+import { RaiseDisputeButton } from '@/components/Disputes';
 
 type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string };
 type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | null; check_in: string; check_out: string; status: string; total_amount: number };
@@ -41,6 +43,7 @@ const UserDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
+        <BackButton to="/" label="Home" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || user?.email} 👋</h1>
           <p className="text-muted-foreground">Here's what's happening on your account.</p>

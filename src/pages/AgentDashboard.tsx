@@ -16,6 +16,9 @@ import { useListings } from '@/hooks/useListings';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BackButton } from '@/components/BackButton';
+import { WithdrawPanel } from '@/components/WithdrawPanel';
+import { RaiseDisputeButton, MyDisputesList } from '@/components/Disputes';
 
 type Insp = { id: string; listing_id: string; user_id: string; mode: string; scheduled_at: string; status: string; fee: number };
 

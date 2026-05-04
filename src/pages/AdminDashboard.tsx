@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BackButton } from '@/components/BackButton';
+import { StaffDisputesPanel } from '@/components/Disputes';
 
 type Pending = any;
 
