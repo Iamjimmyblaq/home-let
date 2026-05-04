@@ -128,6 +128,7 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
+        <BackButton to="/" label="Home" />
         <h1 className="text-3xl font-bold mb-1">Admin Console</h1>
         <p className="text-muted-foreground mb-8">Platform-wide moderation, KYC and analytics.</p>
 
@@ -150,6 +151,7 @@ const AdminDashboard = () => {
           <TabsList>
             <TabsTrigger value="agents">KYC queue ({agents.length})</TabsTrigger>
             <TabsTrigger value="listings">Pending listings ({listings.length})</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="roles"><UserCog className="h-4 w-4 mr-1" />Roles</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -185,6 +187,7 @@ const AdminDashboard = () => {
               ))}
             </div>
           </TabsContent>
+          <TabsContent value="disputes" className="mt-4"><StaffDisputesPanel /></TabsContent>
           <TabsContent value="roles" className="mt-4"><RolesPanel /></TabsContent>
           <TabsContent value="analytics" className="mt-4">
             <div className="bg-card border rounded-2xl p-6">
