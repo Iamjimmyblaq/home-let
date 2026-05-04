@@ -90,7 +90,9 @@ const Wallet = () => {
         <Tabs defaultValue="fund">
           <TabsList>
             <TabsTrigger value="fund">Fund wallet</TabsTrigger>
-            <TabsTrigger value="history">Transaction history</TabsTrigger>
+            <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
+            <TabsTrigger value="history">Transactions</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
           </TabsList>
           <TabsContent value="fund" className="bg-card border rounded-2xl p-6 mt-4">
             <h3 className="font-semibold mb-4">Add funds</h3>
