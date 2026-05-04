@@ -12,7 +12,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const dashHref = role === 'admin' ? '/admin' : role === 'agent' ? '/agent' : '/dashboard';
+  const dashHref = role === 'admin' || role === 'moderator' ? '/admin' : role === 'agent' ? '/agent' : '/dashboard';
   const displayName = profile?.full_name || user?.email?.split('@')[0] || '';
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>

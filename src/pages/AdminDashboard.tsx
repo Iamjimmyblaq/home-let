@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BackButton } from '@/components/BackButton';
+import { StaffDisputesPanel } from '@/components/Disputes';
 
 type Pending = any;
 
@@ -46,7 +48,7 @@ const RolesPanel = () => {
   };
   useEffect(() => { load(); }, []);
 
-  const setRole = async (uid: string, role: 'user' | 'agent' | 'admin') => {
+  const setRole = async (uid: string, role: 'user' | 'agent' | 'admin' | 'moderator') => {
     await supabase.from('user_roles').delete().eq('user_id', uid);
     const { error } = await supabase.from('user_roles').insert({ user_id: uid, role });
     if (error) { toast.error(error.message); return; }
@@ -76,6 +78,7 @@ const RolesPanel = () => {
                 <SelectContent>
                   <SelectItem value="user">user</SelectItem>
                   <SelectItem value="agent">agent</SelectItem>
+                  <SelectItem value="moderator">moderator</SelectItem>
                   <SelectItem value="admin">admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -126,6 +129,7 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
+        <BackButton to="/" label="Home" />
         <h1 className="text-3xl font-bold mb-1">Admin Console</h1>
         <p className="text-muted-foreground mb-8">Platform-wide moderation, KYC and analytics.</p>
 
@@ -148,6 +152,7 @@ const AdminDashboard = () => {
           <TabsList>
             <TabsTrigger value="agents">KYC queue ({agents.length})</TabsTrigger>
             <TabsTrigger value="listings">Pending listings ({listings.length})</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="roles"><UserCog className="h-4 w-4 mr-1" />Roles</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -183,6 +188,7 @@ const AdminDashboard = () => {
               ))}
             </div>
           </TabsContent>
+          <TabsContent value="disputes" className="mt-4"><StaffDisputesPanel /></TabsContent>
           <TabsContent value="roles" className="mt-4"><RolesPanel /></TabsContent>
           <TabsContent value="analytics" className="mt-4">
             <div className="bg-card border rounded-2xl p-6">

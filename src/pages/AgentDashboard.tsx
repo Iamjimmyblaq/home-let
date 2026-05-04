@@ -16,6 +16,9 @@ import { useListings } from '@/hooks/useListings';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BackButton } from '@/components/BackButton';
+import { WithdrawPanel } from '@/components/WithdrawPanel';
+import { RaiseDisputeButton, MyDisputesList } from '@/components/Disputes';
 
 type Insp = { id: string; listing_id: string; user_id: string; mode: string; scheduled_at: string; status: string; fee: number };
 
@@ -148,6 +151,7 @@ const AgentDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
+        <BackButton to="/" label="Home" />
         <KYCBanner />
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
@@ -176,7 +180,8 @@ const AgentDashboard = () => {
           <TabsList>
             <TabsTrigger value="listings">My listings</TabsTrigger>
             <TabsTrigger value="inspections">Inspection requests</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
+            <TabsTrigger value="earnings">Earnings & withdraw</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
           </TabsList>
           <TabsContent value="listings" className="mt-4">
             <div className="bg-card border rounded-2xl overflow-hidden">
@@ -201,8 +206,8 @@ const AgentDashboard = () => {
             <div className="bg-card border rounded-2xl overflow-hidden">
               {inspections.length === 0 && <div className="p-8 text-center text-muted-foreground">No inspection requests yet.</div>}
               {inspections.map((i) => (
-                <div key={i.id} className="flex items-center gap-4 p-4 border-b last:border-0">
-                  <div className="flex-1">
+                <div key={i.id} className="flex items-center gap-3 p-4 border-b last:border-0 flex-wrap">
+                  <div className="flex-1 min-w-[180px]">
                     <div className="font-medium text-sm">{titleOf(i.listing_id)}</div>
                     <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode} · {naira(i.fee)}</div>
                   </div>
@@ -212,17 +217,22 @@ const AgentDashboard = () => {
                     <Button size="sm" variant="outline" onClick={() => updateInsp(i.id, 'cancelled')}>Decline</Button>
                   </>}
                   {i.status === 'confirmed' && <Button size="sm" variant="outline" onClick={() => updateInsp(i.id, 'completed')}>Mark done</Button>}
+                  {(i.status === 'completed' || i.status === 'cancelled') && (
+                    <RaiseDisputeButton inspectionId={i.id} againstUser={i.user_id} amount={i.fee} />
+                  )}
                 </div>
               ))}
             </div>
           </TabsContent>
-          <TabsContent value="earnings" className="mt-4">
+          <TabsContent value="earnings" className="mt-4 space-y-4">
             <div className="bg-card border rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-2"><TrendingUp className="h-5 w-5 text-success" /><span className="font-semibold">Wallet balance</span></div>
               <div className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: 'Sora' }}>{naira(wallet.available_balance)}</div>
-              <div className="text-sm text-muted-foreground">Earnings are paid out weekly. 60% revenue share on completed bookings.</div>
+              <div className="text-sm text-muted-foreground">60% revenue share on completed bookings. Withdraw any time below.</div>
             </div>
+            <WithdrawPanel />
           </TabsContent>
+          <TabsContent value="disputes" className="mt-4 bg-card border rounded-2xl p-6"><MyDisputesList /></TabsContent>
         </Tabs>
       </div>
     </Layout>

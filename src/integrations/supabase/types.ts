@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank_code: string
+          bank_name: string
+          created_at: string
+          id: string
+          is_default: boolean
+          recipient_code: string | null
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank_code: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          recipient_code?: string | null
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank_code?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          recipient_code?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           agent_id: string | null
@@ -101,6 +137,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      disputes: {
+        Row: {
+          against_user: string
+          amount: number
+          booking_id: string | null
+          created_at: string
+          id: string
+          inspection_id: string | null
+          raised_by: string
+          reason: string
+          resolution: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          against_user: string
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          inspection_id?: string | null
+          raised_by: string
+          reason: string
+          resolution?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          against_user?: string
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          inspection_id?: string | null
+          raised_by?: string
+          reason?: string
+          resolution?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       favorites: {
         Row: {
@@ -393,6 +480,45 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          amount: number
+          bank_account_id: string
+          created_at: string
+          failure_reason: string | null
+          id: string
+          paystack_reference: string | null
+          paystack_transfer_code: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_account_id: string
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          paystack_reference?: string | null
+          paystack_transfer_code?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          paystack_reference?: string | null
+          paystack_transfer_code?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -411,7 +537,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "user" | "agent" | "admin"
+      app_role: "user" | "agent" | "admin" | "moderator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -539,7 +665,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["user", "agent", "admin"],
+      app_role: ["user", "agent", "admin", "moderator"],
     },
   },
 } as const

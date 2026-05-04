@@ -11,8 +11,10 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useListings } from '@/hooks/useListings';
+import { BackButton } from '@/components/BackButton';
+import { RaiseDisputeButton } from '@/components/Disputes';
 
-type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string };
+type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string; agent_id: string; fee: number };
 type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | null; check_in: string; check_out: string; status: string; total_amount: number };
 
 const UserDashboard = () => {
@@ -27,7 +29,7 @@ const UserDashboard = () => {
     if (!user) return;
     (async () => {
       const [{ data: ins }, { data: bk }] = await Promise.all([
-        supabase.from('inspections').select('id,listing_id,mode,scheduled_at,status').eq('user_id', user.id).order('scheduled_at', { ascending: true }),
+        supabase.from('inspections').select('id,listing_id,mode,scheduled_at,status,agent_id,fee').eq('user_id', user.id).order('scheduled_at', { ascending: true }),
         supabase.from('bookings').select('id,listing_id,hotel_ref,check_in,check_out,status,total_amount').eq('user_id', user.id).order('check_in', { ascending: true }),
       ]);
       setInspections((ins as any) || []);
@@ -41,6 +43,7 @@ const UserDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
+        <BackButton to="/" label="Home" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || user?.email} 👋</h1>
           <p className="text-muted-foreground">Here's what's happening on your account.</p>
@@ -66,12 +69,15 @@ const UserDashboard = () => {
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />Upcoming inspections</h2>
             {inspections.length === 0 && <p className="text-sm text-muted-foreground">No inspections yet.</p>}
             {inspections.map((i) => (
-              <div key={i.id} className="flex items-center gap-4 p-3 border rounded-xl mb-3">
-                <div className="flex-1">
+              <div key={i.id} className="flex items-center gap-4 p-3 border rounded-xl mb-3 flex-wrap">
+                <div className="flex-1 min-w-[180px]">
                   <div className="font-medium text-sm">{titleOf(i.listing_id)}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode} · {naira(i.fee)}</div>
                 </div>
                 <Badge className={i.status === 'confirmed' ? 'bg-success text-success-foreground' : 'bg-accent text-accent-foreground'}>{i.status}</Badge>
+                {(i.status === 'completed' || i.status === 'confirmed' || i.status === 'cancelled') && (
+                  <RaiseDisputeButton inspectionId={i.id} againstUser={i.agent_id} amount={i.fee} />
+                )}
               </div>
             ))}
             {bookings.length > 0 && (

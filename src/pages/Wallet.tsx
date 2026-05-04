@@ -10,6 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
+import { BackButton } from '@/components/BackButton';
+import { WithdrawPanel } from '@/components/WithdrawPanel';
+import { MyDisputesList } from '@/components/Disputes';
 
 type Txn = { id: string; type: string; amount: number; description: string | null; created_at: string };
 
@@ -68,6 +71,7 @@ const Wallet = () => {
   return (
     <Layout>
       <div className="container py-10 max-w-5xl">
+        <BackButton />
         <h1 className="text-3xl font-bold mb-6">Wallet & Escrow</h1>
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           <div className="md:col-span-2 rounded-2xl gradient-hero text-primary-foreground p-8 shadow-elegant relative overflow-hidden">
@@ -86,7 +90,9 @@ const Wallet = () => {
         <Tabs defaultValue="fund">
           <TabsList>
             <TabsTrigger value="fund">Fund wallet</TabsTrigger>
-            <TabsTrigger value="history">Transaction history</TabsTrigger>
+            <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
+            <TabsTrigger value="history">Transactions</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
           </TabsList>
           <TabsContent value="fund" className="bg-card border rounded-2xl p-6 mt-4">
             <h3 className="font-semibold mb-4">Add funds</h3>
@@ -102,6 +108,8 @@ const Wallet = () => {
             </div>
             <Button size="lg" className="w-full" onClick={handleFund} disabled={busy}><Plus className="h-4 w-4" /> {busy ? 'Redirecting to Paystack…' : `Fund ${naira(Number(amt) || 0)} via Paystack`}</Button>
           </TabsContent>
+          <TabsContent value="withdraw" className="mt-4"><WithdrawPanel /></TabsContent>
+          <TabsContent value="disputes" className="bg-card border rounded-2xl p-6 mt-4"><MyDisputesList /></TabsContent>
           <TabsContent value="history" className="bg-card border rounded-2xl p-6 mt-4">
             <div className="space-y-3">
               {txns.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No transactions yet.</p>}
