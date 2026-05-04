@@ -151,6 +151,7 @@ const AgentDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
+        <BackButton to="/" label="Home" />
         <KYCBanner />
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
@@ -179,7 +180,8 @@ const AgentDashboard = () => {
           <TabsList>
             <TabsTrigger value="listings">My listings</TabsTrigger>
             <TabsTrigger value="inspections">Inspection requests</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
+            <TabsTrigger value="earnings">Earnings & withdraw</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
           </TabsList>
           <TabsContent value="listings" className="mt-4">
             <div className="bg-card border rounded-2xl overflow-hidden">
@@ -219,13 +221,15 @@ const AgentDashboard = () => {
               ))}
             </div>
           </TabsContent>
-          <TabsContent value="earnings" className="mt-4">
+          <TabsContent value="earnings" className="mt-4 space-y-4">
             <div className="bg-card border rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-2"><TrendingUp className="h-5 w-5 text-success" /><span className="font-semibold">Wallet balance</span></div>
               <div className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: 'Sora' }}>{naira(wallet.available_balance)}</div>
-              <div className="text-sm text-muted-foreground">Earnings are paid out weekly. 60% revenue share on completed bookings.</div>
+              <div className="text-sm text-muted-foreground">60% revenue share on completed bookings. Withdraw any time below.</div>
             </div>
+            <WithdrawPanel />
           </TabsContent>
+          <TabsContent value="disputes" className="mt-4 bg-card border rounded-2xl p-6"><MyDisputesList /></TabsContent>
         </Tabs>
       </div>
     </Layout>
