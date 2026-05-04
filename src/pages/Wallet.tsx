@@ -71,6 +71,7 @@ const Wallet = () => {
   return (
     <Layout>
       <div className="container py-10 max-w-5xl">
+        <BackButton />
         <h1 className="text-3xl font-bold mb-6">Wallet & Escrow</h1>
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           <div className="md:col-span-2 rounded-2xl gradient-hero text-primary-foreground p-8 shadow-elegant relative overflow-hidden">
