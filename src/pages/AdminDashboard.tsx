@@ -48,7 +48,7 @@ const RolesPanel = () => {
   };
   useEffect(() => { load(); }, []);
 
-  const setRole = async (uid: string, role: 'user' | 'agent' | 'admin') => {
+  const setRole = async (uid: string, role: 'user' | 'agent' | 'admin' | 'moderator') => {
     await supabase.from('user_roles').delete().eq('user_id', uid);
     const { error } = await supabase.from('user_roles').insert({ user_id: uid, role });
     if (error) { toast.error(error.message); return; }
@@ -78,6 +78,7 @@ const RolesPanel = () => {
                 <SelectContent>
                   <SelectItem value="user">user</SelectItem>
                   <SelectItem value="agent">agent</SelectItem>
+                  <SelectItem value="moderator">moderator</SelectItem>
                   <SelectItem value="admin">admin</SelectItem>
                 </SelectContent>
               </Select>
