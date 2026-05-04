@@ -10,6 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
+import { BackButton } from '@/components/BackButton';
+import { WithdrawPanel } from '@/components/WithdrawPanel';
+import { MyDisputesList } from '@/components/Disputes';
 
 type Txn = { id: string; type: string; amount: number; description: string | null; created_at: string };
 
