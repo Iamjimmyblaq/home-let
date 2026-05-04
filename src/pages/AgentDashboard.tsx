@@ -206,8 +206,8 @@ const AgentDashboard = () => {
             <div className="bg-card border rounded-2xl overflow-hidden">
               {inspections.length === 0 && <div className="p-8 text-center text-muted-foreground">No inspection requests yet.</div>}
               {inspections.map((i) => (
-                <div key={i.id} className="flex items-center gap-4 p-4 border-b last:border-0">
-                  <div className="flex-1">
+                <div key={i.id} className="flex items-center gap-3 p-4 border-b last:border-0 flex-wrap">
+                  <div className="flex-1 min-w-[180px]">
                     <div className="font-medium text-sm">{titleOf(i.listing_id)}</div>
                     <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode} · {naira(i.fee)}</div>
                   </div>
@@ -217,6 +217,9 @@ const AgentDashboard = () => {
                     <Button size="sm" variant="outline" onClick={() => updateInsp(i.id, 'cancelled')}>Decline</Button>
                   </>}
                   {i.status === 'confirmed' && <Button size="sm" variant="outline" onClick={() => updateInsp(i.id, 'completed')}>Mark done</Button>}
+                  {(i.status === 'completed' || i.status === 'cancelled') && (
+                    <RaiseDisputeButton inspectionId={i.id} againstUser={i.user_id} amount={i.fee} />
+                  )}
                 </div>
               ))}
             </div>
