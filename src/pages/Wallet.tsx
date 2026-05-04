@@ -108,6 +108,8 @@ const Wallet = () => {
             </div>
             <Button size="lg" className="w-full" onClick={handleFund} disabled={busy}><Plus className="h-4 w-4" /> {busy ? 'Redirecting to Paystack…' : `Fund ${naira(Number(amt) || 0)} via Paystack`}</Button>
           </TabsContent>
+          <TabsContent value="withdraw" className="mt-4"><WithdrawPanel /></TabsContent>
+          <TabsContent value="disputes" className="bg-card border rounded-2xl p-6 mt-4"><MyDisputesList /></TabsContent>
           <TabsContent value="history" className="bg-card border rounded-2xl p-6 mt-4">
             <div className="space-y-3">
               {txns.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No transactions yet.</p>}
