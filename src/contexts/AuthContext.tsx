@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,26 +35,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadExtras = async (uid: string) => {
+  const loadExtras = useCallback(async (uid: string) => {
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', uid),
     ]);
     setProfile((prof as Profile) ?? null);
     const rs = (roles ?? []).map((r: any) => r.role as AppRole);
-    setRole(rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : rs.includes('user') ? 'user' : null);
-  };
+    setRole(rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user');
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setLoading(true);
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
         // defer to avoid auth callback deadlock
-        setTimeout(() => loadExtras(sess.user.id), 0);
+        setTimeout(() => loadExtras(sess.user.id).finally(() => setLoading(false)), 0);
       } else {
         setProfile(null);
         setRole(null);
+        setLoading(false);
       }
     });
 
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [loadExtras]);
 
   // Live-refresh role/profile when admin changes them
   useEffect(() => {
@@ -79,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         () => loadExtras(user.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user]);
+  }, [user, loadExtras]);
 
   const refresh = async () => { if (user) await loadExtras(user.id); };
   const signOut = async () => { await supabase.auth.signOut(); };
