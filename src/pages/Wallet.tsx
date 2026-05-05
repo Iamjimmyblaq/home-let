@@ -17,8 +17,9 @@ import { MyDisputesList } from '@/components/Disputes';
 type Txn = { id: string; type: string; amount: number; description: string | null; created_at: string };
 
 const Wallet = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const { wallet, reload } = useWallet();
+  const canFund = role === 'user' || role === 'admin' || !role;
   const [amt, setAmt] = useState('50000');
   const [txns, setTxns] = useState<Txn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -87,27 +88,29 @@ const Wallet = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="fund">
+        <Tabs defaultValue={canFund ? 'fund' : 'withdraw'}>
           <TabsList>
-            <TabsTrigger value="fund">Fund wallet</TabsTrigger>
+            {canFund && <TabsTrigger value="fund">Fund wallet</TabsTrigger>}
             <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
             <TabsTrigger value="history">Transactions</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
           </TabsList>
-          <TabsContent value="fund" className="bg-card border rounded-2xl p-6 mt-4">
-            <h3 className="font-semibold mb-4">Add funds</h3>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {[10000, 50000, 100000, 250000].map((v) => (
-                <Button key={v} variant="outline" size="sm" onClick={() => setAmt(String(v))}>{naira(v)}</Button>
-              ))}
-            </div>
-            <Input type="number" value={amt} onChange={(e) => setAmt(e.target.value)} className="mb-4 text-lg" />
-            <div className="grid sm:grid-cols-2 gap-3 mb-4">
-              <button className="p-4 border-2 border-primary rounded-xl text-left flex items-center gap-3"><CreditCard className="h-5 w-5 text-primary" /><div><div className="font-medium text-sm">Card</div><div className="text-xs text-muted-foreground">Visa, Master, Verve</div></div></button>
-              <button className="p-4 border-2 rounded-xl text-left flex items-center gap-3"><Smartphone className="h-5 w-5" /><div><div className="font-medium text-sm">Bank transfer</div><div className="text-xs text-muted-foreground">Paystack / Flutterwave</div></div></button>
-            </div>
-            <Button size="lg" className="w-full" onClick={handleFund} disabled={busy}><Plus className="h-4 w-4" /> {busy ? 'Redirecting to Paystack…' : `Fund ${naira(Number(amt) || 0)} via Paystack`}</Button>
-          </TabsContent>
+          {canFund && (
+            <TabsContent value="fund" className="bg-card border rounded-2xl p-6 mt-4">
+              <h3 className="font-semibold mb-4">Add funds</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {[10000, 50000, 100000, 250000].map((v) => (
+                  <Button key={v} variant="outline" size="sm" onClick={() => setAmt(String(v))}>{naira(v)}</Button>
+                ))}
+              </div>
+              <Input type="number" value={amt} onChange={(e) => setAmt(e.target.value)} className="mb-4 text-lg" />
+              <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                <button className="p-4 border-2 border-primary rounded-xl text-left flex items-center gap-3"><CreditCard className="h-5 w-5 text-primary" /><div><div className="font-medium text-sm">Card</div><div className="text-xs text-muted-foreground">Visa, Master, Verve</div></div></button>
+                <button className="p-4 border-2 rounded-xl text-left flex items-center gap-3"><Smartphone className="h-5 w-5" /><div><div className="font-medium text-sm">Bank transfer</div><div className="text-xs text-muted-foreground">Paystack / Flutterwave</div></div></button>
+              </div>
+              <Button size="lg" className="w-full" onClick={handleFund} disabled={busy}><Plus className="h-4 w-4" /> {busy ? 'Redirecting to Paystack…' : `Fund ${naira(Number(amt) || 0)} via Paystack`}</Button>
+            </TabsContent>
+          )}
           <TabsContent value="withdraw" className="mt-4"><WithdrawPanel /></TabsContent>
           <TabsContent value="disputes" className="bg-card border rounded-2xl p-6 mt-4"><MyDisputesList /></TabsContent>
           <TabsContent value="history" className="bg-card border rounded-2xl p-6 mt-4">
