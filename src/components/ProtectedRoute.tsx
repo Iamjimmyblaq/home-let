@@ -12,6 +12,9 @@ export const ProtectedRoute = ({
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
   if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(loc.pathname)}`} replace />;
-  if (roles && role && !roles.includes(role)) return <Navigate to="/dashboard" replace />;
+  if (roles && (!role || !roles.includes(role))) {
+    const dest = role === 'admin' || role === 'moderator' ? '/admin' : role === 'agent' ? '/agent' : '/dashboard';
+    return <Navigate to={dest} replace />;
+  }
   return <>{children}</>;
 };

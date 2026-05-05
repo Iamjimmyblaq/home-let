@@ -19,7 +19,7 @@ type Txn = { id: string; type: string; amount: number; description: string | nul
 const Wallet = () => {
   const { user, role, loading: authLoading } = useAuth();
   const { wallet, reload } = useWallet();
-  const canFund = role === 'user' || role === 'admin' || !role;
+  const canFund = role === 'user' || role === 'admin';
   const [amt, setAmt] = useState('50000');
   const [txns, setTxns] = useState<Txn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -67,7 +67,7 @@ const Wallet = () => {
     }
   };
 
-  const labelOf = (t: string) => t === 'fund' ? 'Top-up' : t === 'escrow_hold' ? 'Held in escrow' : t === 'escrow_release' ? 'Released' : t === 'refund' ? 'Refund' : 'Payout';
+  const labelOf = (t: string) => t === 'fund' ? 'Top-up' : t === 'escrow_hold' ? 'Held in escrow' : t === 'escrow_release' ? 'Released' : t === 'refund' ? 'Refund' : t === 'platform_fee' ? 'Platform fee' : 'Payout';
 
   return (
     <Layout>

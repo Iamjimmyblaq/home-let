@@ -30,16 +30,28 @@ export const useBeepNotifications = () => {
 
   useEffect(() => {
     if (!user) return;
+    const isHost = role === 'agent' || role === 'admin';
     const ch = supabase
       .channel(`beeps-${user.id}`)
       // New inspection booking targeted at this agent/landlord
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'inspections', filter: `agent_id=eq.${user.id}` },
         (payload) => {
+          if (!isHost) return;
           const id = (payload.new as any).id;
           if (seen.current.has(id)) return; seen.current.add(id);
           beep(880, 200); setTimeout(() => beep(1175, 220), 220);
           toast.success('🔔 New inspection booked!', { description: 'A user just requested an inspection.' });
+        })
+      // New hotel/short-let booking targeted at this host
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bookings', filter: `agent_id=eq.${user.id}` },
+        (payload) => {
+          if (!isHost) return;
+          const id = (payload.new as any).id;
+          if (seen.current.has(id)) return; seen.current.add(id);
+          beep(784, 180); setTimeout(() => beep(1046, 240), 200);
+          toast.success('🔔 New booking received!', { description: 'A guest just booked your property.' });
         })
       // Inspection status changes (completed) — beep for both parties
       .on('postgres_changes',
@@ -47,9 +59,9 @@ export const useBeepNotifications = () => {
           filter: role === 'agent' ? `agent_id=eq.${user.id}` : `user_id=eq.${user.id}` },
         (payload) => {
           const n = payload.new as any, o = payload.old as any;
-          if (n.status === 'completed' && o.status !== 'completed') {
+          if ((n.status === 'completed' || n.status === 'settled') && n.status !== o.status) {
             beep(660, 180); setTimeout(() => beep(990, 280), 200);
-            toast.success('✅ Inspection completed', { description: 'Funds settling shortly.' });
+            toast.success(n.status === 'settled' ? '✅ Inspection funds released' : '✅ Inspection completed', { description: n.status === 'settled' ? 'The transaction is complete.' : 'Customer can now release funds.' });
           }
         })
       // Payouts / fund credits

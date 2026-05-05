@@ -4,24 +4,21 @@ import { useAuth } from '@/contexts/AuthContext';
 
 /** When the user's role changes, send them to their proper dashboard. */
 export const RoleRouter = () => {
-  const { role, user } = useAuth();
+  const { role, user, loading } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
   const prev = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
+    if (loading) return;
     if (!user) { prev.current = null; return; }
-    if (prev.current === undefined) { prev.current = role; return; } // initial
-    if (prev.current !== role) {
-      prev.current = role;
-      // Only redirect if currently on a dashboard route
-      if (/^\/(dashboard|agent|admin)/.test(loc.pathname)) {
-        const dest = role === 'admin' || role === 'moderator' ? '/admin'
-          : role === 'agent' ? '/agent' : '/dashboard';
-        nav(dest, { replace: true });
-      }
+    const dest = role === 'admin' || role === 'moderator' ? '/admin'
+      : role === 'agent' ? '/agent' : '/dashboard';
+    if (/^\/(dashboard|agent|admin)/.test(loc.pathname) && loc.pathname !== dest) {
+      nav(dest, { replace: true });
     }
-  }, [role, user, loc.pathname, nav]);
+    prev.current = role;
+  }, [role, user, loading, loc.pathname, nav]);
 
   return null;
 };
