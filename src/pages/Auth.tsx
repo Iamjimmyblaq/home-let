@@ -16,6 +16,7 @@ const roleRedirect = async (): Promise<string> => {
   const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', u.user.id);
   const rs = (roles || []).map((r: any) => r.role);
   if (rs.includes('admin')) return '/admin';
+  if (rs.includes('moderator')) return '/admin';
   if (rs.includes('agent')) return '/agent';
   return '/dashboard';
 };
