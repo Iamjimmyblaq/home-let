@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BackButton } from '@/components/BackButton';
 import { StaffDisputesPanel } from '@/components/Disputes';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Pending = any;
 
