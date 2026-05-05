@@ -19,7 +19,7 @@ type Txn = { id: string; type: string; amount: number; description: string | nul
 const Wallet = () => {
   const { user, role, loading: authLoading } = useAuth();
   const { wallet, reload } = useWallet();
-  const canFund = role === 'user' || role === 'admin' || !role;
+  const canFund = role === 'user' || role === 'admin';
   const [amt, setAmt] = useState('50000');
   const [txns, setTxns] = useState<Txn[]>([]);
   const [busy, setBusy] = useState(false);
