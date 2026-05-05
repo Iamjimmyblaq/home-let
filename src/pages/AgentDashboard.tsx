@@ -132,6 +132,16 @@ const AgentDashboard = () => {
   };
   useEffect(() => { loadInsp(); }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`agent-insp-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inspections', filter: `agent_id=eq.${user.id}` },
+        () => loadInsp())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
+
   const updateInsp = async (id: string, status: string) => {
     await supabase.from('inspections').update({ status }).eq('id', id);
     loadInsp();
