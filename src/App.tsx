@@ -21,6 +21,7 @@ import Booking from "./pages/Booking";
 import UserDashboard from "./pages/UserDashboard";
 import AgentDashboard from "./pages/AgentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import { RoleRouter } from "./components/RoleRouter";
 
 const queryClient = new QueryClient();
 
