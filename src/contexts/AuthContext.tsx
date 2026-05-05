@@ -68,6 +68,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Live-refresh role/profile when admin changes them
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`user-extras-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles', filter: `user_id=eq.${user.id}` },
+        () => loadExtras(user.id))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `user_id=eq.${user.id}` },
+        () => loadExtras(user.id))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
+
   const refresh = async () => { if (user) await loadExtras(user.id); };
   const signOut = async () => { await supabase.auth.signOut(); };
 
