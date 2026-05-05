@@ -62,7 +62,7 @@ const KYCBanner = () => {
 };
 
 const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({
@@ -120,7 +120,7 @@ const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
 };
 
 const AgentDashboard = () => {
-  const { user } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const { wallet } = useWallet();
   const { items: listings, reload } = useListings({ agentId: user?.id });
   const [inspections, setInspections] = useState<Insp[]>([]);
