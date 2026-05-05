@@ -133,10 +133,15 @@ export const Footer = () => (
   </footer>
 );
 
-export const Layout = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen flex flex-col">
-    <Navbar />
-    <main className="flex-1">{children}</main>
-    <Footer />
-  </div>
-);
+import { useBeepNotifications } from '@/hooks/useBeepNotifications';
+
+export const Layout = ({ children }: { children: React.ReactNode }) => {
+  useBeepNotifications();
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1">{children}</main>
+      <Footer />
+    </div>
+  );
+};
