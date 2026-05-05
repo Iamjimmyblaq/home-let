@@ -1,7 +1,7 @@
 import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
 import { PropertyCard } from '@/components/PropertyCard';
-import { Calendar, Heart, Wallet, MessageSquare, Eye, ShieldCheck } from 'lucide-react';
+import { Calendar, CheckCircle2, Heart, Wallet, MessageSquare, Eye, ShieldCheck } from 'lucide-react';
 import { naira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | n
 
 const UserDashboard = () => {
   const { user, profile } = useAuth();
-  const { wallet } = useWallet();
+  const { wallet, reload } = useWallet();
   const { favorites } = useFavorites();
   const { items } = useListings();
   const [inspections, setInspections] = useState<InspectionRow[]>([]);
@@ -39,6 +39,14 @@ const UserDashboard = () => {
 
   const favs = useMemo(() => items.filter((p) => favorites.includes(p.id)), [items, favorites]);
   const titleOf = (lid: string) => items.find((i) => i.id === lid)?.title || 'Property';
+
+  const releaseInspection = async (id: string) => {
+    const { data, error } = await supabase.functions.invoke('inspection-settle', { body: { inspection_id: id } });
+    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || 'Could not release funds'); return; }
+    toast.success('Inspection confirmed — funds released.');
+    setInspections((prev) => prev.map((i) => i.id === id ? { ...i, status: 'settled' } : i));
+    reload();
+  };
 
   return (
     <Layout>
@@ -75,9 +83,8 @@ const UserDashboard = () => {
                   <div className="text-xs text-muted-foreground">{new Date(i.scheduled_at).toLocaleString()} · {i.mode} · {naira(i.fee)}</div>
                 </div>
                 <Badge className={i.status === 'confirmed' ? 'bg-success text-success-foreground' : 'bg-accent text-accent-foreground'}>{i.status}</Badge>
-                {(i.status === 'completed' || i.status === 'confirmed' || i.status === 'cancelled') && (
-                  <RaiseDisputeButton inspectionId={i.id} againstUser={i.agent_id} amount={i.fee} />
-                )}
+                {i.status === 'completed' && <Button size="sm" onClick={() => releaseInspection(i.id)}><CheckCircle2 className="h-4 w-4" /> Release funds</Button>}
+                {(i.status === 'completed' || i.status === 'confirmed' || i.status === 'cancelled') && <RaiseDisputeButton inspectionId={i.id} againstUser={i.agent_id} amount={i.fee} />}
               </div>
             ))}
             {bookings.length > 0 && (
