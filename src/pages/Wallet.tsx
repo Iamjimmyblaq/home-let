@@ -67,7 +67,7 @@ const Wallet = () => {
     }
   };
 
-  const labelOf = (t: string) => t === 'fund' ? 'Top-up' : t === 'escrow_hold' ? 'Held in escrow' : t === 'escrow_release' ? 'Released' : t === 'refund' ? 'Refund' : 'Payout';
+  const labelOf = (t: string) => t === 'fund' ? 'Top-up' : t === 'escrow_hold' ? 'Held in escrow' : t === 'escrow_release' ? 'Released' : t === 'refund' ? 'Refund' : t === 'platform_fee' ? 'Platform fee' : 'Payout';
 
   return (
     <Layout>
