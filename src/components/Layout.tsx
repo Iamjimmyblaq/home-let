@@ -40,10 +40,12 @@ export const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <Link to="/wallet" className="flex items-center gap-2 px-3 h-9 rounded-lg bg-secondary text-sm font-medium">
-                <Wallet className="h-4 w-4 text-primary" />
-                {naira(wallet.available_balance)}
-              </Link>
+              {role !== 'moderator' && (
+                <Link to="/wallet" className="flex items-center gap-2 px-3 h-9 rounded-lg bg-secondary text-sm font-medium">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  {naira(wallet.available_balance)}
+                </Link>
+              )}
               <Link to={dashHref}>
                 <Button variant="outline" size="sm">
                   <UserIcon className="h-4 w-4" /> {displayName}
@@ -75,7 +77,7 @@ export const Navbar = () => {
             <NavLink to="/contact" className={linkCls} onClick={() => setOpen(false)}>Contact</NavLink>
             {user ? (
               <>
-                <Link to="/wallet" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Wallet · {naira(wallet.available_balance)}</Button></Link>
+                {role !== 'moderator' && <Link to="/wallet" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Wallet · {naira(wallet.available_balance)}</Button></Link>}
                 <Link to={dashHref} onClick={() => setOpen(false)}><Button className="w-full">Dashboard</Button></Link>
                 <Button variant="ghost" className="w-full" onClick={handleSignOut}>Sign out</Button>
               </>
