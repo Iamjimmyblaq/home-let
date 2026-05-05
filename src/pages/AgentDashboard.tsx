@@ -1,6 +1,6 @@
 import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
-import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, Pencil } from 'lucide-react';
+import { Building2, Calendar, CheckCircle2, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, XCircle } from 'lucide-react';
 import { naira, shortNaira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ const KYCBanner = () => {
 };
 
 const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
-  const { user } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({
@@ -142,10 +142,16 @@ const AgentDashboard = () => {
     return () => { supabase.removeChannel(ch); };
   }, [user]);
 
+  if (authLoading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
+  if (role !== 'agent' && role !== 'admin') {
+    return <Layout><div className="container py-20 text-center text-muted-foreground">Agent access only.</div></Layout>;
+  }
+
   const updateInsp = async (id: string, status: string) => {
-    await supabase.from('inspections').update({ status }).eq('id', id);
+    const { error } = await supabase.from('inspections').update({ status }).eq('id', id);
+    if (error) { toast.error(error.message); return; }
     loadInsp();
-    toast.success(`Inspection ${status}`);
+    toast.success(status === 'confirmed' ? 'Inspection accepted' : status === 'cancelled' ? 'Inspection declined' : 'Inspection marked completed');
   };
 
   const deleteListing = async (id: string) => {
