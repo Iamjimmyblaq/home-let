@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useListings } from '@/hooks/useListings';
 import { BackButton } from '@/components/BackButton';
 import { RaiseDisputeButton } from '@/components/Disputes';
+import { toast } from 'sonner';
 
 type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string; agent_id: string; fee: number };
 type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | null; check_in: string; check_out: string; status: string; total_amount: number };
