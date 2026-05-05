@@ -115,7 +115,20 @@ const AdminDashboard = () => {
       escrow: (w || []).reduce((s: number, x: any) => s + Number(x.escrow_balance || 0), 0),
     });
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (!isModerator) load(); }, [isModerator]);
+
+  if (isModerator) {
+    return (
+      <Layout>
+        <div className="container py-10">
+          <BackButton to="/" label="Home" />
+          <h1 className="text-3xl font-bold mb-1">Moderator Console</h1>
+          <p className="text-muted-foreground mb-8">Resolve open disputes between users and agents.</p>
+          <StaffDisputesPanel />
+        </div>
+      </Layout>
+    );
+  }
 
   const decideAgent = async (id: string, ok: boolean) => {
     await supabase.from('profiles').update({ kyc_status: ok ? 'verified' : 'rejected' }).eq('id', id);
