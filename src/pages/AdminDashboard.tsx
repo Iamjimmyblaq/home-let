@@ -93,6 +93,8 @@ const RolesPanel = () => {
 };
 
 const AdminDashboard = () => {
+  const { role } = useAuth();
+  const isModerator = role === 'moderator';
   const [agents, setAgents] = useState<Pending[]>([]);
   const [listings, setListings] = useState<Pending[]>([]);
   const [stats, setStats] = useState({ users: 0, listings: 0, escrow: 0 });
