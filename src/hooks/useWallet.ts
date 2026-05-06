@@ -35,8 +35,8 @@ export const useWallet = () => {
   const holdEscrow = (amount: number, description: string, referenceId?: string) =>
     callEscrow({ action: 'hold', amount, description, reference_id: referenceId });
 
-  const releaseEscrow = (amount: number, payee_user_id: string, description: string, referenceId?: string) =>
-    callEscrow({ action: 'release', amount, payee_user_id, description, reference_id: referenceId });
+  const releaseEscrow = (amount: number, opts: { booking_id?: string; inspection_id?: string }, description?: string) =>
+    callEscrow({ action: 'release', amount, description, ...opts });
 
   const refundEscrow = (amount: number, description: string, referenceId?: string) =>
     callEscrow({ action: 'refund', amount, description, reference_id: referenceId });
