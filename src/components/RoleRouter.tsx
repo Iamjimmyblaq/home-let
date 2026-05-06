@@ -14,7 +14,7 @@ export const RoleRouter = () => {
     if (!user) { prev.current = null; return; }
     const dest = role === 'admin' || role === 'moderator' ? '/admin'
       : role === 'agent' ? '/agent' : '/dashboard';
-    if (/^\/(dashboard|agent|admin)/.test(loc.pathname) && loc.pathname !== dest) {
+    if (/^\/(dashboard|agent|admin)(\/|$)/.test(loc.pathname) && loc.pathname !== dest) {
       nav(dest, { replace: true });
     }
     prev.current = role;
