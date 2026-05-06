@@ -379,6 +379,7 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           agency_name?: string | null
@@ -392,6 +393,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           agency_name?: string | null
@@ -405,6 +407,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
