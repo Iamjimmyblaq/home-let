@@ -18,12 +18,10 @@ export const useWallet = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const fund = async (amount: number) => {
-    if (!user) return;
-    const next = wallet.available_balance + amount;
-    await supabase.from('wallets').update({ available_balance: next }).eq('user_id', user.id);
-    await supabase.from('transactions').insert({ user_id: user.id, type: 'fund', amount, description: 'Wallet top-up' });
-    await load();
+  // Wallet funding goes through Paystack edge functions (paystack-initialize / paystack-verify);
+  // direct client writes to wallets/transactions are not allowed.
+  const fund = async (_amount: number) => {
+    throw new Error('Use Paystack checkout to fund your wallet.');
   };
 
   const callEscrow = async (body: any) => {
