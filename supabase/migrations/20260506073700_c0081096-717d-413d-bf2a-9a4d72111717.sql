@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "users insert own wallet" ON public.wallets;

@@ -50,7 +50,7 @@ const Booking = () => {
         user_id: user.id,
         agent_id: item.agentId,
         check_in: checkin, check_out: checkout, guests,
-        total_amount: total, status: 'confirmed',
+        total_amount: total, status: 'pending',
       });
       await holdEscrow(total, `Booking — ${item.title}`);
       toast.success('Booking confirmed! Held in escrow until check-in.');
