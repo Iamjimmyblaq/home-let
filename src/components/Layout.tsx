@@ -1,10 +1,11 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Wallet, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
+import { Wallet, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { naira } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
+import logoUrl from '@/assets/logo.png';
 
 export const Navbar = () => {
   const { user, profile, role, signOut } = useAuth();
@@ -24,9 +25,7 @@ export const Navbar = () => {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between gap-6">
         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center text-primary-foreground">
-            <Home className="h-4 w-4" />
-          </div>
+          <img src={logoUrl} alt="Home-let logo" className="h-9 w-9 rounded-lg object-contain bg-white p-0.5" />
           <span>Home<span className="text-accent">-let</span></span>
         </Link>
 
@@ -99,9 +98,7 @@ export const Footer = () => (
     <div className="container py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
       <div className="col-span-2 md:col-span-1">
         <div className="flex items-center gap-2 font-bold text-lg mb-3">
-          <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center text-primary-foreground">
-            <Home className="h-4 w-4" />
-          </div>
+          <img src={logoUrl} alt="Home-let logo" className="h-9 w-9 rounded-lg object-contain bg-white p-0.5" />
           Home<span className="text-accent">-let</span>
         </div>
         <p className="text-sm text-muted-foreground">Nigeria's trusted peer-to-peer real estate platform. Verified agents, escrow-protected payments.</p>
