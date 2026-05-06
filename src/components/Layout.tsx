@@ -98,9 +98,7 @@ export const Footer = () => (
     <div className="container py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
       <div className="col-span-2 md:col-span-1">
         <div className="flex items-center gap-2 font-bold text-lg mb-3">
-          <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center text-primary-foreground">
-            <Home className="h-4 w-4" />
-          </div>
+          <img src={logoUrl} alt="Home-let logo" className="h-9 w-9 rounded-lg object-contain bg-white p-0.5" />
           Home<span className="text-accent">-let</span>
         </div>
         <p className="text-sm text-muted-foreground">Nigeria's trusted peer-to-peer real estate platform. Verified agents, escrow-protected payments.</p>
