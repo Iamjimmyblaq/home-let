@@ -1,10 +1,11 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Wallet, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
+import { Wallet, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { naira } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
+import logoUrl from '@/assets/logo.png';
 
 export const Navbar = () => {
   const { user, profile, role, signOut } = useAuth();
