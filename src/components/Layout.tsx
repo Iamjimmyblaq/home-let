@@ -25,9 +25,7 @@ export const Navbar = () => {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between gap-6">
         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center text-primary-foreground">
-            <Home className="h-4 w-4" />
-          </div>
+          <img src={logoUrl} alt="Home-let logo" className="h-9 w-9 rounded-lg object-contain bg-white p-0.5" />
           <span>Home<span className="text-accent">-let</span></span>
         </Link>
 
