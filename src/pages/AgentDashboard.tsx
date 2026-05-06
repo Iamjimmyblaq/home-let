@@ -198,6 +198,7 @@ const AgentDashboard = () => {
             <TabsTrigger value="inspections">Inspection requests</TabsTrigger>
             <TabsTrigger value="earnings">Earnings & withdraw</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
           <TabsContent value="listings" className="mt-4">
             <div className="bg-card border rounded-2xl overflow-hidden">
@@ -249,6 +250,7 @@ const AgentDashboard = () => {
             <WithdrawPanel />
           </TabsContent>
           <TabsContent value="disputes" className="mt-4 bg-card border rounded-2xl p-6"><MyDisputesList /></TabsContent>
+          <TabsContent value="profile" className="mt-4"><AgentProfileForm /></TabsContent>
         </Tabs>
       </div>
     </Layout>
