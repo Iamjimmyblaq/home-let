@@ -61,6 +61,60 @@ const KYCBanner = () => {
   );
 };
 
+const AgentProfileForm = () => {
+  const { user, profile, refresh } = useAuth();
+  const [f, setF] = useState({ full_name: '', username: '', phone: '', agency_name: '', bio: '' });
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (profile) setF({
+      full_name: profile.full_name || '', username: profile.username || '',
+      phone: profile.phone || '', agency_name: profile.agency_name || '', bio: profile.bio || '',
+    });
+  }, [profile]);
+  if (!user) return null;
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.from('profiles').update(f).eq('user_id', user.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    await refresh();
+    toast.success('Profile updated');
+  };
+  const onAvatar = async (file: File) => {
+    setBusy(true);
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from('kyc-docs').upload(path, file, { upsert: true });
+    if (upErr) { toast.error(upErr.message); setBusy(false); return; }
+    const { data: signed } = await supabase.storage.from('kyc-docs').createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (signed?.signedUrl) {
+      await supabase.from('profiles').update({ avatar_url: signed.signedUrl }).eq('user_id', user.id);
+      await refresh();
+      toast.success('Avatar updated');
+    }
+    setBusy(false);
+  };
+  return (
+    <form onSubmit={save} className="bg-card border rounded-2xl p-6 space-y-4 max-w-2xl">
+      <div className="flex items-center gap-4">
+        <img src={profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(f.full_name || 'A')}`} className="h-16 w-16 rounded-full object-cover" />
+        <label className="inline-flex">
+          <input type="file" className="hidden" accept="image/*" disabled={busy} onChange={(e) => e.target.files?.[0] && onAvatar(e.target.files[0])} />
+          <Button type="button" size="sm" variant="outline" disabled={busy} asChild><span>{busy ? 'Uploading…' : 'Change avatar'}</span></Button>
+        </label>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div><Label>Full name</Label><Input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} required /></div>
+        <div><Label>Username</Label><Input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase() })} placeholder="e.g. james_eze" /></div>
+        <div><Label>Phone</Label><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
+        <div><Label>Agency / Company</Label><Input value={f.agency_name} onChange={(e) => setF({ ...f, agency_name: e.target.value })} /></div>
+      </div>
+      <div><Label>Bio</Label><Textarea rows={4} value={f.bio} onChange={(e) => setF({ ...f, bio: e.target.value })} placeholder="Tell renters about your experience and specialties." /></div>
+      <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save profile'}</Button>
+    </form>
+  );
+};
+
 const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -198,6 +252,7 @@ const AgentDashboard = () => {
             <TabsTrigger value="inspections">Inspection requests</TabsTrigger>
             <TabsTrigger value="earnings">Earnings & withdraw</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
           <TabsContent value="listings" className="mt-4">
             <div className="bg-card border rounded-2xl overflow-hidden">
@@ -249,6 +304,7 @@ const AgentDashboard = () => {
             <WithdrawPanel />
           </TabsContent>
           <TabsContent value="disputes" className="mt-4 bg-card border rounded-2xl p-6"><MyDisputesList /></TabsContent>
+          <TabsContent value="profile" className="mt-4"><AgentProfileForm /></TabsContent>
         </Tabs>
       </div>
     </Layout>

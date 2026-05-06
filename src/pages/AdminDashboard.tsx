@@ -70,7 +70,7 @@ const RolesPanel = () => {
             <div key={p.id} className="flex items-center gap-3 py-3">
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">{(p.full_name || '?').charAt(0)}</div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{p.full_name || 'Unnamed'}</div>
+                <div className="text-sm font-medium truncate">{p.full_name || 'Unnamed'} {p.username && <span className="text-xs text-muted-foreground font-normal">@{p.username}</span>}</div>
                 <div className="text-xs text-muted-foreground truncate">{p.agency_name || 'Independent'} · KYC {p.kyc_status}</div>
               </div>
               <Badge variant="outline" className="capitalize">{current}</Badge>

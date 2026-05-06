@@ -83,11 +83,16 @@ export const Login = () => {
 export const Register = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState<AppRole>('user');
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', agency: '' });
+  const [form, setForm] = useState({ name: '', username: '', email: '', password: '', phone: '', agency: '' });
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const uname = form.username.trim();
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(uname)) {
+      toast.error('Username must be 3-20 chars (letters, numbers, underscore).');
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signUp({
       email: form.email,
@@ -96,6 +101,7 @@ export const Register = () => {
         emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: form.name,
+          username: uname,
           phone: form.phone,
           agency_name: role === 'agent' ? form.agency : null,
           role,
@@ -129,6 +135,7 @@ export const Register = () => {
 
           <form onSubmit={submit} className="space-y-4">
             <div><Label>Full name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+            <div><Label>Username</Label><Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase() })} placeholder="e.g. james_eze" required /></div>
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
             <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+234..." /></div>
             {role === 'agent' && (

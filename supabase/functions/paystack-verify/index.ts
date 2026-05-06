@@ -60,9 +60,15 @@ Deno.serve(async (req) => {
 
     const { data: w, error: wErr } = await admin.from('wallets').select('available_balance').eq('user_id', userId).maybeSingle();
     if (wErr) throw wErr;
-    const next = Number(w?.available_balance || 0) + naira;
-    const { error: uErr } = await admin.from('wallets').update({ available_balance: next }).eq('user_id', userId);
-    if (uErr) throw uErr;
+    const current = Number(w?.available_balance || 0);
+    const next = current + naira;
+    if (w) {
+      const { error: uErr } = await admin.from('wallets').update({ available_balance: next }).eq('user_id', userId);
+      if (uErr) throw uErr;
+    } else {
+      const { error: iErr } = await admin.from('wallets').insert({ user_id: userId, available_balance: next, escrow_balance: 0 });
+      if (iErr) throw iErr;
+    }
     await admin.from('transactions').insert({ user_id: userId, type: 'fund', amount: naira, description: `Paystack: ${reference}` });
 
     return new Response(JSON.stringify({ ok: true, amount: naira, balance: next }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
