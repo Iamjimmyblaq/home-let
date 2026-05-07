@@ -446,16 +446,19 @@ export type Database = {
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
+          username: string | null
         }
         Insert: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
+          username?: string | null
         }
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -527,6 +530,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_username: {
+        Args: { _email: string; _preferred: string }
+        Returns: string
+      }
+      credit_paystack_wallet: {
+        Args: { _amount: number; _reference: string; _user_id: string }
+        Returns: Json
+      }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
