@@ -36,7 +36,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const ensureAccount = useCallback(async () => {
+    try {
+      await supabase.functions.invoke('ensure-account', { body: {} });
+    } catch (error) {
+      console.warn('ensure-account failed', error);
+    }
+  }, []);
+
   const loadExtras = useCallback(async (uid: string) => {
+    await ensureAccount();
     const [{ data: prof }, { data: roles }] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle(),
       supabase.from('user_roles').select('role').eq('user_id', uid),
@@ -44,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile((prof as Profile) ?? null);
     const rs = (roles ?? []).map((r: any) => r.role as AppRole);
     setRole(rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user');
-  }, []);
+  }, [ensureAccount]);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {

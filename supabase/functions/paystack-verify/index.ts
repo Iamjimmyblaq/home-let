@@ -51,27 +51,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Idempotency: check existing transaction with this reference description
-    const { data: existing } = await admin.from('transactions')
-      .select('id').eq('user_id', userId).eq('description', `Paystack: ${reference}`).maybeSingle();
-    if (existing) {
-      return new Response(JSON.stringify({ ok: true, already: true, amount: naira }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    const { data: credit, error: creditErr } = await admin.rpc('credit_paystack_wallet', {
+      _user_id: userId,
+      _amount: naira,
+      _reference: reference,
+    });
+    if (creditErr) throw creditErr;
+    const next = Number((credit as any)?.balance || 0);
 
-    const { data: w, error: wErr } = await admin.from('wallets').select('available_balance').eq('user_id', userId).maybeSingle();
-    if (wErr) throw wErr;
-    const current = Number(w?.available_balance || 0);
-    const next = current + naira;
-    if (w) {
-      const { error: uErr } = await admin.from('wallets').update({ available_balance: next }).eq('user_id', userId);
-      if (uErr) throw uErr;
-    } else {
-      const { error: iErr } = await admin.from('wallets').insert({ user_id: userId, available_balance: next, escrow_balance: 0 });
-      if (iErr) throw iErr;
-    }
-    await admin.from('transactions').insert({ user_id: userId, type: 'fund', amount: naira, description: `Paystack: ${reference}` });
-
-    return new Response(JSON.stringify({ ok: true, amount: naira, balance: next }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ ok: true, already: Boolean((credit as any)?.already), amount: naira, balance: next }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e: any) {
     console.error('paystack-verify-error', e);
     return new Response(JSON.stringify({ error: 'An internal error occurred. Please try again.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
