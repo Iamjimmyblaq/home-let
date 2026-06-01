@@ -279,7 +279,9 @@ export type Database = {
           featured: boolean
           id: string
           images: string[] | null
+          latitude: number | null
           location: string
+          longitude: number | null
           price: number
           state: string | null
           status: string
@@ -301,7 +303,9 @@ export type Database = {
           featured?: boolean
           id?: string
           images?: string[] | null
+          latitude?: number | null
           location: string
+          longitude?: number | null
           price: number
           state?: string | null
           status?: string
@@ -323,7 +327,9 @@ export type Database = {
           featured?: boolean
           id?: string
           images?: string[] | null
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           price?: number
           state?: string | null
           status?: string
@@ -369,6 +375,8 @@ export type Database = {
       profiles: {
         Row: {
           agency_name: string | null
+          agent_rating: number
+          agent_reviews: number
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -383,6 +391,8 @@ export type Database = {
         }
         Insert: {
           agency_name?: string | null
+          agent_rating?: number
+          agent_reviews?: number
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -397,6 +407,8 @@ export type Database = {
         }
         Update: {
           agency_name?: string | null
+          agent_rating?: number
+          agent_reviews?: number
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
