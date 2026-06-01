@@ -3,7 +3,7 @@ import { Layout } from '@/components/Layout';
 import { naira } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BedDouble, Bath, Maximize, MapPin, ShieldCheck, Eye, MessageSquare, Calendar, Phone, Star, Check } from 'lucide-react';
+import { BedDouble, Bath, Maximize, MapPin, ShieldCheck, Eye, MessageSquare, Calendar, Phone, Check, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useListing } from '@/hooks/useListings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,13 @@ const PropertyDetail = () => {
   if (!p) return <Layout><div className="container py-20 text-center">Property not found.</div></Layout>;
 
   const priceLabel = p.type === 'rent' ? `${naira(p.price)}/year` : p.type === 'shortlet' ? `${naira(p.price)}/night` : naira(p.price);
+  const hasCoords = typeof p.latitude === 'number' && typeof p.longitude === 'number';
+  const mapSrc = hasCoords
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${p.longitude! - 0.006}%2C${p.latitude! - 0.004}%2C${p.longitude! + 0.006}%2C${p.latitude! + 0.004}&layer=mapnik&marker=${p.latitude}%2C${p.longitude}`
+    : '';
+  const directionsUrl = hasCoords
+    ? `https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.location}, ${p.city}, ${p.state}`)}`;
 
   const messageAgent = async () => {
     if (!user) { navigate('/login'); return; }
@@ -108,6 +115,28 @@ const PropertyDetail = () => {
                 </Button>
               </div>
             )}
+
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h2 className="text-xl font-bold">Property location</h2>
+                <a href={directionsUrl} target="_blank" rel="noreferrer" className="text-sm text-primary inline-flex items-center gap-1 hover:underline">
+                  Open map <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+              {hasCoords ? (
+                <iframe
+                  title={`Map for ${p.title}`}
+                  src={mapSrc}
+                  className="w-full aspect-[16/9] rounded-2xl border bg-muted"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="rounded-2xl border bg-secondary/50 p-6 text-sm text-muted-foreground flex gap-2">
+                  <MapPin className="h-4 w-4 text-primary shrink-0" />
+                  Exact coordinates have not been added yet. Use Open map to search the address.
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-4">

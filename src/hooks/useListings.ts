@@ -21,6 +21,8 @@ export type DbListing = {
   tour_url: string | null;
   status: 'pending' | 'verified' | 'rejected' | 'inactive';
   featured: boolean;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 // Unified card-friendly type combining seeded mock data + real DB rows
@@ -49,10 +51,24 @@ export type UnifiedProperty = {
   description: string;
   hasVirtualTour: boolean;
   tourUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+const seedCoords: Record<string, { latitude: number; longitude: number }> = {
+  p1: { latitude: 6.4698, longitude: 3.5517 },
+  p2: { latitude: 6.4316, longitude: 3.4542 },
+  p3: { latitude: 6.4478, longitude: 3.4723 },
+  p4: { latitude: 9.0876, longitude: 7.4948 },
+  p5: { latitude: 6.5163, longitude: 3.3792 },
+  p6: { latitude: 6.4532, longitude: 4.0953 },
+  p7: { latitude: 6.4314, longitude: 3.5082 },
+  p8: { latitude: 6.6156, longitude: 3.3838 },
 };
 
 const seedToUnified = (p: SeedProperty): UnifiedProperty => {
   const a = seedAgents.find((x) => x.id === p.agentId);
+  const coords = seedCoords[p.id];
   return {
     id: p.id, source: 'seed', title: p.title, type: p.type, price: p.price,
     location: p.location, city: p.city, state: p.state,
@@ -60,6 +76,7 @@ const seedToUnified = (p: SeedProperty): UnifiedProperty => {
     image: p.image, gallery: p.gallery, agentId: p.agentId,
     agentName: a?.name, agentAvatar: a?.avatar, agentAgency: a?.agency, agentPhone: a?.phone, agentVerified: a?.verified,
     verified: p.verified, features: p.features, description: p.description, hasVirtualTour: p.hasVirtualTour,
+    latitude: coords?.latitude ?? null, longitude: coords?.longitude ?? null,
   };
 };
 
@@ -82,6 +99,8 @@ const dbToUnified = (l: DbListing, profileMap: Map<string, any>): UnifiedPropert
     description: l.description || '',
     hasVirtualTour: !!l.tour_url,
     tourUrl: l.tour_url,
+    latitude: l.latitude,
+    longitude: l.longitude,
   };
 };
 

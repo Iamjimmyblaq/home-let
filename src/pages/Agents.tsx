@@ -55,8 +55,8 @@ const useAgentList = () => {
           bio: p.bio || 'Verified Home-let agent.',
           phone: p.phone || '',
           verified: p.kyc_status === 'verified',
-          rating: p.kyc_status === 'verified' ? 4.8 : 4.0,
-          reviews: counts[p.user_id] || 0,
+          rating: Number(p.agent_rating || (p.kyc_status === 'verified' ? 4.8 : 4.0)),
+          reviews: Number(p.agent_reviews || counts[p.user_id] || 0),
           listings: counts[p.user_id] || 0,
         }));
       }
@@ -123,7 +123,7 @@ export const AgentProfile = () => {
           agency: p.agency_name || 'Independent',
           avatar: p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
           bio: p.bio || 'Verified Home-let agent.', phone: p.phone || '',
-          verified: p.kyc_status === 'verified', rating: 4.6, reviews: 0, listings: 0,
+          verified: p.kyc_status === 'verified', rating: Number(p.agent_rating || 4.6), reviews: Number(p.agent_reviews || 0), listings: 0,
         });
       }
       const { data: l } = await supabase.from('listings').select('*').eq('agent_id', id).eq('status', 'verified');
@@ -143,6 +143,7 @@ export const AgentProfile = () => {
       gallery: l.images || [], agentId: l.agent_id,
       agentName: a.name, agentAvatar: a.avatar, agentAgency: a.agency, agentPhone: a.phone, agentVerified: a.verified,
       verified: true, features: l.amenities || [], description: l.description || '', hasVirtualTour: !!l.tour_url, tourUrl: l.tour_url,
+      latitude: l.latitude, longitude: l.longitude,
     })),
   ];
 

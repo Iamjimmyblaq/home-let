@@ -121,7 +121,7 @@ const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({
     title: '', type: 'rent', price: '', bedrooms: '2', bathrooms: '2', area: '120',
-    location: '', city: '', state: 'Lagos', description: '', amenities: '', image: '', tour: '',
+    location: '', city: '', state: 'Lagos', latitude: '', longitude: '', description: '', amenities: '', image: '', tour: '',
   });
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,8 +134,10 @@ const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
       amenities: f.amenities.split(',').map((s) => s.trim()).filter(Boolean),
       images: f.image ? [f.image] : [],
       tour_url: f.tour || null,
+      latitude: f.latitude ? Number(f.latitude) : null,
+      longitude: f.longitude ? Number(f.longitude) : null,
       status: 'pending',
-    });
+    } as any);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success('Listing submitted — pending admin verification.');
@@ -161,6 +163,10 @@ const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
             <div><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required placeholder="Lekki Phase 1" /></div>
             <div><Label>City</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder="Lekki" /></div>
             <div><Label>State</Label><Select value={f.state} onValueChange={(v) => setF({ ...f, state: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Lagos">Lagos</SelectItem><SelectItem value="Abuja">Abuja</SelectItem><SelectItem value="Rivers">Rivers</SelectItem></SelectContent></Select></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Latitude</Label><Input type="number" step="any" min="-90" max="90" value={f.latitude} onChange={(e) => setF({ ...f, latitude: e.target.value })} placeholder="6.4478" /></div>
+            <div><Label>Longitude</Label><Input type="number" step="any" min="-180" max="180" value={f.longitude} onChange={(e) => setF({ ...f, longitude: e.target.value })} placeholder="3.4723" /></div>
           </div>
           <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={3} /></div>
           <div><Label>Amenities (comma separated)</Label><Input value={f.amenities} onChange={(e) => setF({ ...f, amenities: e.target.value })} placeholder="Pool, Gym, Security" /></div>

@@ -94,23 +94,21 @@ export const Register = () => {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: form.name,
-          username: uname,
-          phone: form.phone,
-          agency_name: role === 'agent' ? form.agency : null,
-          role,
-        },
+    const { data, error } = await supabase.functions.invoke('register-account', {
+      body: {
+        email: form.email,
+        password: form.password,
+        full_name: form.name,
+        username: uname,
+        phone: form.phone,
+        agency_name: role === 'agent' ? form.agency : null,
+        role,
+        email_redirect_to: `${window.location.origin}/`,
       },
     });
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success('Account created — check your email to confirm.');
+    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message); return; }
+    toast.success(role === 'agent' ? 'Agent account created — check your email to confirm.' : 'Account created — check your email to confirm.');
     navigate('/login');
   };
 
