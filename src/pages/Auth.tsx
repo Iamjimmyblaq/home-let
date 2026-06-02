@@ -53,10 +53,12 @@ export const Login = () => {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { setBusy(false); toast.error(error.message); return; }
     toast.success('Welcome back!');
-    navigate(params.get('redirect') || (await roleRedirect()));
+    const dest = params.get('redirect') || (await roleRedirect());
+    // Hard navigation guarantees AuthContext re-initializes with the new session
+    // and role state before route guards evaluate.
+    window.location.assign(dest);
   };
 
   return (
