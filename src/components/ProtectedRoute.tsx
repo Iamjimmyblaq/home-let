@@ -8,7 +8,8 @@ export const ProtectedRoute = ({
   const { user, role, loading } = useAuth();
   const loc = useLocation();
 
-  if (loading) {
+  // Wait while auth is loading OR while we have a user but role hasn't resolved yet.
+  if (loading || (user && !role)) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
   if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(loc.pathname)}`} replace />;
