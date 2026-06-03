@@ -17,12 +17,26 @@ export type Profile = {
   kyc_doc_url: string | null;
 };
 
+export type RouteGuardDebug = {
+  path: string;
+  requiredRoles: AppRole[] | null;
+  resolvedRole: AppRole | null;
+  userEmail: string | null;
+  loading: boolean;
+  allowed: boolean | null;
+  reason: string;
+  redirectTo: string | null;
+  checkedAt: string;
+};
+
 type AuthCtx = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
+  routeDebug: RouteGuardDebug | null;
+  setRouteDebug: (debug: RouteGuardDebug | null) => void;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -34,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [routeDebug, setRouteDebug] = useState<RouteGuardDebug | null>(null);
   const [loading, setLoading] = useState(true);
 
   const ensureAccount = useCallback(async () => {
@@ -46,13 +61,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadExtras = useCallback(async (uid: string) => {
     await ensureAccount();
-    const [{ data: prof }, { data: roles }] = await Promise.all([
+    const [{ data: prof }, { data: rpcRole }, { data: roles }] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle(),
+      (supabase as any).rpc('get_my_role'),
       supabase.from('user_roles').select('role').eq('user_id', uid),
     ]);
     setProfile((prof as Profile) ?? null);
     const rs = (roles ?? []).map((r: any) => r.role as AppRole);
-    setRole(rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user');
+    setRole((rpcRole as AppRole | null) ?? (rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user'));
   }, [ensureAccount]);
 
   useEffect(() => {
@@ -94,10 +110,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, loadExtras]);
 
   const refresh = async () => { if (user) await loadExtras(user.id); };
-  const signOut = async () => { await supabase.auth.signOut(); };
+  const signOut = async () => { setRouteDebug(null); await supabase.auth.signOut(); };
 
   return (
-    <Ctx.Provider value={{ session, user, profile, role, loading, refresh, signOut }}>
+    <Ctx.Provider value={{ session, user, profile, role, loading, routeDebug, setRouteDebug, refresh, signOut }}>
       {children}
     </Ctx.Provider>
   );

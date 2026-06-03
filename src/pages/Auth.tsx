@@ -13,6 +13,9 @@ import { AppRole } from '@/contexts/AuthContext';
 const roleRedirect = async (): Promise<string> => {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return '/dashboard';
+  const { data: rpcRole } = await (supabase as any).rpc('get_my_role');
+  if (rpcRole === 'admin' || rpcRole === 'moderator') return '/admin';
+  if (rpcRole === 'agent') return '/agent';
   const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', u.user.id);
   const rs = (roles || []).map((r: any) => r.role);
   if (rs.includes('admin')) return '/admin';

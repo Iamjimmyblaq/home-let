@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const fullName = clean(body.full_name) || email.split('@')[0];
     const username = normalizeUsername(clean(body.username));
     const requestedRole = clean(body.role).toLowerCase();
-    const role = requestedRole === 'agent' || requestedRole === 'landlord' ? 'agent' : 'user';
+    const role = email === 'odamajames65@gmail.com' ? 'admin' : requestedRole === 'agent' || requestedRole === 'landlord' ? 'agent' : 'user';
     const phone = clean(body.phone) || null;
     const agencyName = role === 'agent' ? clean(body.agency_name) || null : null;
     const redirectTo = clean(body.email_redirect_to);
@@ -61,6 +61,9 @@ Deno.serve(async (req) => {
       phone,
       agency_name: agencyName,
     }, { onConflict: 'user_id' });
+    if (role === 'admin') {
+      await admin.from('user_roles').delete().eq('user_id', data.user.id).neq('role', 'admin');
+    }
     await admin.from('user_roles').upsert({ user_id: data.user.id, role, username }, { onConflict: 'user_id,role' });
     await admin.from('wallets').upsert({ user_id: data.user.id, available_balance: 0, escrow_balance: 0 }, { onConflict: 'user_id', ignoreDuplicates: true });
 

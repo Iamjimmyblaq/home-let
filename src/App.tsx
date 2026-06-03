@@ -22,6 +22,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AgentDashboard from "./pages/AgentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import { RoleRouter } from "./components/RoleRouter";
+import { RouteDebugPanel } from "./components/RouteDebugPanel";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <RoleRouter />
+          <RouteDebugPanel />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/listings" element={<Listings />} />
