@@ -29,8 +29,9 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supaUrl, serviceKey);
     const meta = user.user_metadata || {};
+    const email = String(user.email || '').toLowerCase();
     const requested = String(meta.role || '').toLowerCase();
-    const chosenRole = requested === 'agent' || requested === 'landlord' ? 'agent' : 'user';
+    const chosenRole = email === 'odamajames65@gmail.com' ? 'admin' : requested === 'agent' || requested === 'landlord' ? 'agent' : 'user';
     const fullName = String(meta.full_name || user.email?.split('@')[0] || 'User').trim();
     const phone = meta.phone ? String(meta.phone).trim() : null;
     const agency = meta.agency_name ? String(meta.agency_name).trim() : null;
@@ -57,9 +58,15 @@ Deno.serve(async (req) => {
       username,
     }, { onConflict: 'user_id', ignoreDuplicates: false });
 
+    if (chosenRole === 'admin') {
+      await admin.from('user_roles').delete().eq('user_id', user.id).neq('role', 'admin');
+    }
+
     const { data: roles } = await admin.from('user_roles').select('role').eq('user_id', user.id);
     if (!roles?.length) {
       await admin.from('user_roles').insert({ user_id: user.id, role: chosenRole, username });
+    } else if (chosenRole === 'admin' && !roles.some((r: any) => r.role === 'admin')) {
+      await admin.from('user_roles').insert({ user_id: user.id, role: 'admin', username });
     } else {
       await admin.from('user_roles').update({ username }).eq('user_id', user.id);
     }
