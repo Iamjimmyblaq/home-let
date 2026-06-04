@@ -6,10 +6,10 @@ export const ProtectedRoute = ({
   children,
   roles,
 }: { children: React.ReactNode; roles?: AppRole[] }) => {
-  const { user, role, loading, setRouteDebug } = useAuth();
+  const { user, role, loading, roleReady, refresh, setRouteDebug } = useAuth();
   const loc = useLocation();
   const roleRedirect = role === 'admin' || role === 'moderator' ? '/admin' : role === 'agent' ? '/agent' : '/dashboard';
-  const stillLoading = loading || (!!user && !role);
+  const stillLoading = loading || (!!user && !roleReady);
   const allowed = !stillLoading && !!user && (!roles || (!!role && roles.includes(role)));
   const reason = stillLoading
     ? 'Waiting for auth session and role lookup to finish.'
@@ -21,6 +21,7 @@ export const ProtectedRoute = ({
   const redirectTo = stillLoading || allowed ? null : !user ? `/login?redirect=${encodeURIComponent(loc.pathname)}` : roleRedirect;
 
   useEffect(() => {
+    if (user && !roleReady && !loading) refresh();
     setRouteDebug({
       path: loc.pathname,
       requiredRoles: roles ?? null,
@@ -32,7 +33,7 @@ export const ProtectedRoute = ({
       redirectTo,
       checkedAt: new Date().toLocaleTimeString(),
     });
-  }, [allowed, loc.pathname, reason, redirectTo, role, roles, setRouteDebug, stillLoading, user]);
+  }, [allowed, loading, loc.pathname, reason, redirectTo, refresh, role, roleReady, roles, setRouteDebug, stillLoading, user]);
 
   // Wait while auth is loading OR while we have a user but role hasn't resolved yet.
   if (stillLoading) {
