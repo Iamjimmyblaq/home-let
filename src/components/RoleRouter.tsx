@@ -4,13 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 
 /** When the user's role changes, send them to their proper dashboard. */
 export const RoleRouter = () => {
-  const { role, user, loading } = useAuth();
+  const { role, user, loading, roleReady } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
   const prev = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !roleReady) return;
     if (!user) { prev.current = null; return; }
     const dest = role === 'admin' || role === 'moderator' ? '/admin'
       : role === 'agent' ? '/agent' : '/dashboard';
@@ -18,7 +18,7 @@ export const RoleRouter = () => {
       nav(dest, { replace: true });
     }
     prev.current = role;
-  }, [role, user, loading, loc.pathname, nav]);
+  }, [role, user, loading, roleReady, loc.pathname, nav]);
 
   return null;
 };
