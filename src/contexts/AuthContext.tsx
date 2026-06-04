@@ -38,6 +38,7 @@ type AuthCtx = {
   routeDebug: RouteGuardDebug | null;
   setRouteDebug: (debug: RouteGuardDebug | null) => void;
   refresh: () => Promise<void>;
+  roleReady: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -50,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const [routeDebug, setRouteDebug] = useState<RouteGuardDebug | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleReady, setRoleReady] = useState(false);
 
   const ensureAccount = useCallback(async () => {
     try {
@@ -60,6 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const loadExtras = useCallback(async (uid: string) => {
+    setRoleReady(false);
     await ensureAccount();
 
     const { data: rpcRole, error: roleError } = await (supabase as any).rpc('get_my_role');
@@ -83,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .maybeSingle();
     if (profileError) console.warn('profile lookup failed', profileError);
     setProfile((prof as Profile) ?? null);
+    setRoleReady(true);
   }, [ensureAccount]);
 
   useEffect(() => {
@@ -96,6 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
         setRole(null);
+        setRoleReady(true);
         setLoading(false);
       }
     });
@@ -104,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) loadExtras(sess.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      else { setRoleReady(true); setLoading(false); }
     });
 
     return () => sub.subscription.unsubscribe();
@@ -127,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => { setRouteDebug(null); await supabase.auth.signOut(); };
 
   return (
-    <Ctx.Provider value={{ session, user, profile, role, loading, routeDebug, setRouteDebug, refresh, signOut }}>
+    <Ctx.Provider value={{ session, user, profile, role, loading, routeDebug, setRouteDebug, refresh, roleReady, signOut }}>
       {children}
     </Ctx.Provider>
   );
