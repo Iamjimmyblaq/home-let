@@ -61,14 +61,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadExtras = useCallback(async (uid: string) => {
     await ensureAccount();
-    const [{ data: prof }, { data: rpcRole }, { data: roles }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle(),
-      (supabase as any).rpc('get_my_role'),
-      supabase.from('user_roles').select('role').eq('user_id', uid),
-    ]);
-    setProfile((prof as Profile) ?? null);
+
+    const { data: rpcRole, error: roleError } = await (supabase as any).rpc('get_my_role');
+    if (roleError) console.warn('get_my_role failed', roleError);
+
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', uid);
+    if (rolesError) console.warn('user_roles lookup failed', rolesError);
+
     const rs = (roles ?? []).map((r: any) => r.role as AppRole);
-    setRole((rpcRole as AppRole | null) ?? (rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user'));
+    const resolved = (rpcRole as AppRole | null)
+      ?? (rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user');
+    setRole(resolved);
+
+    const { data: prof, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', uid)
+      .maybeSingle();
+    if (profileError) console.warn('profile lookup failed', profileError);
+    setProfile((prof as Profile) ?? null);
   }, [ensureAccount]);
 
   useEffect(() => {
