@@ -22,12 +22,15 @@ const PropertyDetail = () => {
 
   const priceLabel = p.type === 'rent' ? `${naira(p.price)}/year` : p.type === 'shortlet' ? `${naira(p.price)}/night` : naira(p.price);
   const hasCoords = typeof p.latitude === 'number' && typeof p.longitude === 'number';
-  const mapSrc = hasCoords
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${p.longitude! - 0.006}%2C${p.latitude! - 0.004}%2C${p.longitude! + 0.006}%2C${p.latitude! + 0.004}&layer=mapnik&marker=${p.latitude}%2C${p.longitude}`
-    : '';
+  // Google Maps satellite (Google Earth-style) embed — works without API key.
+  const mapQuery = hasCoords
+    ? `${p.latitude},${p.longitude}`
+    : encodeURIComponent(`${p.location}, ${p.city}, ${p.state}`);
+  const mapSrc = `https://maps.google.com/maps?q=${mapQuery}&t=k&z=17&ie=UTF8&iwloc=&output=embed`;
   const directionsUrl = hasCoords
     ? `https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.location}, ${p.city}, ${p.state}`)}`;
+
 
   const messageAgent = async () => {
     if (!user) { navigate('/login'); return; }
@@ -49,18 +52,20 @@ const PropertyDetail = () => {
           <Link to="/" className="hover:text-foreground">Home</Link> / <Link to="/listings" className="hover:text-foreground">Listings</Link> / <span className="text-foreground">{p.title}</span>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-3 mb-8">
-          <div className="md:col-span-3 aspect-[16/10] rounded-2xl overflow-hidden bg-muted">
-            <img src={p.gallery[active] || p.image} alt={p.title} className="w-full h-full object-cover" />
+        <div className="grid md:grid-cols-4 gap-3 mb-8" onContextMenu={(e) => e.preventDefault()}>
+          <div className="md:col-span-3 aspect-[16/10] rounded-2xl overflow-hidden bg-muted relative">
+            <img src={p.gallery[active] || p.image} alt={p.title} draggable={false} className="w-full h-full object-cover select-none" />
+            <div className="absolute bottom-3 right-3 text-white/80 text-[10px] tracking-widest uppercase drop-shadow">Home-let</div>
           </div>
           <div className="grid grid-cols-4 md:grid-cols-1 gap-3">
             {p.gallery.slice(0, 4).map((g, i) => (
               <button key={i} onClick={() => setActive(i)} className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${active === i ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'}`}>
-                <img src={g} alt="" className="w-full h-full object-cover" />
+                <img src={g} alt="" draggable={false} className="w-full h-full object-cover select-none" />
               </button>
             ))}
           </div>
         </div>
+
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
@@ -104,17 +109,18 @@ const PropertyDetail = () => {
               </div>
             )}
 
-            {p.hasVirtualTour && (
+            {p.gallery.length > 0 && (
               <div className="rounded-2xl gradient-hero text-primary-foreground p-8 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold mb-1">Take a 360° virtual tour</h3>
-                  <p className="text-white/80 text-sm">Explore every room from your device.</p>
+                  <h3 className="text-xl font-bold mb-1">Play the virtual tour</h3>
+                  <p className="text-white/80 text-sm">Auto-built from this property's photos — sit back and explore.</p>
                 </div>
                 <Button onClick={() => navigate(`/tour/${p.id}`)} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-gold">
-                  <Eye className="h-4 w-4" /> Launch 360° Tour
+                  <Eye className="h-4 w-4" /> Launch virtual tour
                 </Button>
               </div>
             )}
+
 
             <div>
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -125,17 +131,23 @@ const PropertyDetail = () => {
               </div>
               {hasCoords ? (
                 <iframe
-                  title={`Map for ${p.title}`}
+                  title={`Satellite map for ${p.title}`}
                   src={mapSrc}
                   className="w-full aspect-[16/9] rounded-2xl border bg-muted"
                   loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
                 />
               ) : (
-                <div className="rounded-2xl border bg-secondary/50 p-6 text-sm text-muted-foreground flex gap-2">
-                  <MapPin className="h-4 w-4 text-primary shrink-0" />
-                  Exact coordinates have not been added yet. Use Open map to search the address.
-                </div>
+                <iframe
+                  title={`Map search for ${p.title}`}
+                  src={mapSrc}
+                  className="w-full aspect-[16/9] rounded-2xl border bg-muted"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               )}
+
             </div>
           </div>
 
