@@ -82,16 +82,17 @@ const AgentProfileForm = () => {
     toast.success('Profile updated');
   };
   const onAvatar = async (file: File) => {
+    if (!user) return;
     setBusy(true);
-    const path = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from('kyc-docs').upload(path, file, { upsert: true });
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
     if (upErr) { toast.error(upErr.message); setBusy(false); return; }
-    const { data: signed } = await supabase.storage.from('kyc-docs').createSignedUrl(path, 60 * 60 * 24 * 365);
-    if (signed?.signedUrl) {
-      await supabase.from('profiles').update({ avatar_url: signed.signedUrl }).eq('user_id', user.id);
-      await refresh();
-      toast.success('Avatar updated');
-    }
+    const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { error: updErr } = await supabase.from('profiles').update({ avatar_url: pub.publicUrl }).eq('user_id', user.id);
+    if (updErr) { toast.error(updErr.message); setBusy(false); return; }
+    await refresh();
+    toast.success('Avatar updated');
     setBusy(false);
   };
   return (
@@ -114,6 +115,7 @@ const AgentProfileForm = () => {
     </form>
   );
 };
+
 
 const NewListingDialog = ({ onCreated }: { onCreated: () => void }) => {
   const { user } = useAuth();
