@@ -128,17 +128,23 @@ const PropertyDetail = () => {
               </div>
               {hasCoords ? (
                 <iframe
-                  title={`Map for ${p.title}`}
+                  title={`Satellite map for ${p.title}`}
                   src={mapSrc}
                   className="w-full aspect-[16/9] rounded-2xl border bg-muted"
                   loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
                 />
               ) : (
-                <div className="rounded-2xl border bg-secondary/50 p-6 text-sm text-muted-foreground flex gap-2">
-                  <MapPin className="h-4 w-4 text-primary shrink-0" />
-                  Exact coordinates have not been added yet. Use Open map to search the address.
-                </div>
+                <iframe
+                  title={`Map search for ${p.title}`}
+                  src={mapSrc}
+                  className="w-full aspect-[16/9] rounded-2xl border bg-muted"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               )}
+
             </div>
           </div>
 
