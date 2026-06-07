@@ -244,7 +244,7 @@ const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: 
 
 
 const AgentDashboard = () => {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, profile, loading: authLoading } = useAuth();
   const { wallet } = useWallet();
   const { items: listings, reload } = useListings({ agentId: user?.id });
   const [inspections, setInspections] = useState<Insp[]>([]);
