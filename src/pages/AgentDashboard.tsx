@@ -298,7 +298,12 @@ const AgentDashboard = () => {
             <h1 className="text-3xl font-bold">Agent dashboard</h1>
             <p className="text-muted-foreground">Manage listings, inspections and earnings.</p>
           </div>
-          <NewListingDialog onCreated={reload} />
+          <NewListingDialog
+            onCreated={reload}
+            disabled={role === 'agent' && profile?.kyc_status !== 'verified'}
+            disabledReason="Complete KYC verification to create listings."
+          />
+
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
