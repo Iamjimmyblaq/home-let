@@ -22,12 +22,15 @@ const PropertyDetail = () => {
 
   const priceLabel = p.type === 'rent' ? `${naira(p.price)}/year` : p.type === 'shortlet' ? `${naira(p.price)}/night` : naira(p.price);
   const hasCoords = typeof p.latitude === 'number' && typeof p.longitude === 'number';
-  const mapSrc = hasCoords
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${p.longitude! - 0.006}%2C${p.latitude! - 0.004}%2C${p.longitude! + 0.006}%2C${p.latitude! + 0.004}&layer=mapnik&marker=${p.latitude}%2C${p.longitude}`
-    : '';
+  // Google Maps satellite (Google Earth-style) embed — works without API key.
+  const mapQuery = hasCoords
+    ? `${p.latitude},${p.longitude}`
+    : encodeURIComponent(`${p.location}, ${p.city}, ${p.state}`);
+  const mapSrc = `https://maps.google.com/maps?q=${mapQuery}&t=k&z=17&ie=UTF8&iwloc=&output=embed`;
   const directionsUrl = hasCoords
     ? `https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.location}, ${p.city}, ${p.state}`)}`;
+
 
   const messageAgent = async () => {
     if (!user) { navigate('/login'); return; }
