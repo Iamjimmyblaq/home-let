@@ -109,17 +109,18 @@ const PropertyDetail = () => {
               </div>
             )}
 
-            {p.hasVirtualTour && (
+            {p.gallery.length > 0 && (
               <div className="rounded-2xl gradient-hero text-primary-foreground p-8 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold mb-1">Take a 360° virtual tour</h3>
-                  <p className="text-white/80 text-sm">Explore every room from your device.</p>
+                  <h3 className="text-xl font-bold mb-1">Play the virtual tour</h3>
+                  <p className="text-white/80 text-sm">Auto-built from this property's photos — sit back and explore.</p>
                 </div>
                 <Button onClick={() => navigate(`/tour/${p.id}`)} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-gold">
-                  <Eye className="h-4 w-4" /> Launch 360° Tour
+                  <Eye className="h-4 w-4" /> Launch virtual tour
                 </Button>
               </div>
             )}
+
 
             <div>
               <div className="flex items-center justify-between gap-3 mb-3">
