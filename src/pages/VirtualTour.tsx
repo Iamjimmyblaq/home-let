@@ -1,12 +1,14 @@
 import { Layout } from '@/components/Layout';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, Lock, ArrowLeft, Maximize, RotateCw } from 'lucide-react';
+import { Eye, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import { useListing } from '@/hooks/useListings';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { KenBurnsTour } from '@/components/KenBurnsTour';
+
 
 const VirtualTour = () => {
   const { id } = useParams();
