@@ -52,18 +52,20 @@ const PropertyDetail = () => {
           <Link to="/" className="hover:text-foreground">Home</Link> / <Link to="/listings" className="hover:text-foreground">Listings</Link> / <span className="text-foreground">{p.title}</span>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-3 mb-8">
-          <div className="md:col-span-3 aspect-[16/10] rounded-2xl overflow-hidden bg-muted">
-            <img src={p.gallery[active] || p.image} alt={p.title} className="w-full h-full object-cover" />
+        <div className="grid md:grid-cols-4 gap-3 mb-8" onContextMenu={(e) => e.preventDefault()}>
+          <div className="md:col-span-3 aspect-[16/10] rounded-2xl overflow-hidden bg-muted relative">
+            <img src={p.gallery[active] || p.image} alt={p.title} draggable={false} className="w-full h-full object-cover select-none" />
+            <div className="absolute bottom-3 right-3 text-white/80 text-[10px] tracking-widest uppercase drop-shadow">Home-let</div>
           </div>
           <div className="grid grid-cols-4 md:grid-cols-1 gap-3">
             {p.gallery.slice(0, 4).map((g, i) => (
               <button key={i} onClick={() => setActive(i)} className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${active === i ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'}`}>
-                <img src={g} alt="" className="w-full h-full object-cover" />
+                <img src={g} alt="" draggable={false} className="w-full h-full object-cover select-none" />
               </button>
             ))}
           </div>
         </div>
+
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
