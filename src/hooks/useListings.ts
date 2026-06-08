@@ -120,6 +120,13 @@ const dbToUnified = (l: DbListing, profileMap: Map<string, any>, gallery: string
   };
 };
 
+const resolveDbListing = async (l: DbListing, profileMap: Map<string, any>) => {
+  const prof = profileMap.get(l.agent_id);
+  const gallery = (await Promise.all((l.images || []).map((img) => signedStorageUrl('property-photos', img)))).filter(Boolean) as string[];
+  const avatarUrl = await signedStorageUrl('avatars', prof?.avatar_url);
+  return dbToUnified(l, profileMap, gallery, avatarUrl);
+};
+
 export const useListings = (opts?: { agentId?: string; includeUnverified?: boolean }) => {
   const [items, setItems] = useState<UnifiedProperty[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +146,7 @@ export const useListings = (opts?: { agentId?: string; includeUnverified?: boole
       profileMap = new Map((profs || []).map((p: any) => [p.user_id, p]));
     }
 
-    const dbUnified = filtered.map((r) => dbToUnified(r, profileMap));
+    const dbUnified = await Promise.all(filtered.map((r) => resolveDbListing(r, profileMap)));
     if (opts?.agentId) {
       setItems(dbUnified);
     } else {
@@ -169,7 +176,7 @@ export const useListing = (id?: string) => {
       if (data) {
         const { data: prof } = await supabase.from('profiles').select('*').eq('user_id', (data as any).agent_id).maybeSingle();
         const map = new Map([[(data as any).agent_id, prof]]);
-        setItem(dbToUnified(data as DbListing, map));
+        setItem(await resolveDbListing(data as DbListing, map));
       }
       setLoading(false);
     })();
