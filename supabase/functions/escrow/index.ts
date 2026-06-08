@@ -56,6 +56,34 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === 'refund') {
+      // Require a reference and validate it is in a refundable state with no open dispute
+      let refId: string | null = null;
+      if (body.booking_id) {
+        const { data: b } = await admin.from('bookings')
+          .select('user_id, status').eq('id', body.booking_id).maybeSingle();
+        if (!b || b.user_id !== user.id) return json({ error: 'Booking not found' }, 404);
+        if (!['pending', 'cancelled', 'declined'].includes(b.status)) {
+          return json({ error: 'Booking is not refundable in its current state' }, 400);
+        }
+        const { data: d } = await admin.from('disputes')
+          .select('id').eq('booking_id', body.booking_id).eq('status', 'open').maybeSingle();
+        if (d) return json({ error: 'Refund blocked: open dispute on this booking' }, 409);
+        refId = body.booking_id;
+      } else if (body.inspection_id) {
+        const { data: i } = await admin.from('inspections')
+          .select('user_id, status').eq('id', body.inspection_id).maybeSingle();
+        if (!i || i.user_id !== user.id) return json({ error: 'Inspection not found' }, 404);
+        if (!['pending', 'cancelled', 'declined'].includes(i.status)) {
+          return json({ error: 'Inspection is not refundable in its current state' }, 400);
+        }
+        const { data: d } = await admin.from('disputes')
+          .select('id').eq('inspection_id', body.inspection_id).eq('status', 'open').maybeSingle();
+        if (d) return json({ error: 'Refund blocked: open dispute on this inspection' }, 409);
+        refId = body.inspection_id;
+      } else {
+        return json({ error: 'booking_id or inspection_id is required to refund escrow' }, 400);
+      }
+
       if (payer.escrow_balance < amount) return json({ error: 'Insufficient escrow' }, 400);
       await admin.from('wallets').update({
         escrow_balance: payer.escrow_balance - amount,
@@ -64,7 +92,7 @@ Deno.serve(async (req) => {
       await admin.from('transactions').insert({
         user_id: user.id, type: 'refund', amount,
         description: body.description || 'Escrow refunded',
-        reference_id: body.reference_id ?? null,
+        reference_id: refId,
       });
       return json({ ok: true, action: 'refund', amount });
     }
