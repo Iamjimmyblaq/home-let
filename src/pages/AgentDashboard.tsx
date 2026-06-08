@@ -64,6 +64,7 @@ const KYCBanner = () => {
 const AgentProfileForm = () => {
   const { user, profile, refresh } = useAuth();
   const [f, setF] = useState({ full_name: '', username: '', phone: '', agency_name: '', bio: '' });
+  const [avatarSrc, setAvatarSrc] = useState('');
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (profile) setF({
@@ -71,6 +72,18 @@ const AgentProfileForm = () => {
       phone: profile.phone || '', agency_name: profile.agency_name || '', bio: profile.bio || '',
     });
   }, [profile]);
+  useEffect(() => {
+    if (!profile?.avatar_url) { setAvatarSrc(''); return; }
+    if (/^(https?:|data:|blob:|\/)/.test(profile.avatar_url) && !profile.avatar_url.includes('/object/public/avatars/')) {
+      setAvatarSrc(profile.avatar_url);
+      return;
+    }
+    const marker = '/object/public/avatars/';
+    const path = profile.avatar_url.includes(marker)
+      ? decodeURIComponent(profile.avatar_url.split(marker)[1].split('?')[0])
+      : profile.avatar_url;
+    supabase.storage.from('avatars').createSignedUrl(path, 60 * 60 * 24).then(({ data }) => setAvatarSrc(data?.signedUrl ?? ''));
+  }, [profile?.avatar_url]);
   if (!user) return null;
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,9 +101,10 @@ const AgentProfileForm = () => {
     const path = `${user.id}/avatar-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
     if (upErr) { toast.error(upErr.message); setBusy(false); return; }
-    const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
-    const { error: updErr } = await supabase.from('profiles').update({ avatar_url: pub.publicUrl }).eq('user_id', user.id);
+    const { data: signed } = await supabase.storage.from('avatars').createSignedUrl(path, 60 * 60 * 24);
+    const { error: updErr } = await supabase.from('profiles').update({ avatar_url: path }).eq('user_id', user.id);
     if (updErr) { toast.error(updErr.message); setBusy(false); return; }
+    setAvatarSrc(signed?.signedUrl ?? '');
     await refresh();
     toast.success('Avatar updated');
     setBusy(false);
@@ -98,7 +112,7 @@ const AgentProfileForm = () => {
   return (
     <form onSubmit={save} className="bg-card border rounded-2xl p-6 space-y-4 max-w-2xl">
       <div className="flex items-center gap-4">
-        <img src={profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(f.full_name || 'A')}`} className="h-16 w-16 rounded-full object-cover" />
+        <img src={avatarSrc || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(f.full_name || 'A')}`} className="h-16 w-16 rounded-full object-cover" />
         <label className="inline-flex">
           <input type="file" className="hidden" accept="image/*" disabled={busy} onChange={(e) => e.target.files?.[0] && onAvatar(e.target.files[0])} />
           <Button type="button" size="sm" variant="outline" disabled={busy} asChild><span>{busy ? 'Uploading…' : 'Change avatar'}</span></Button>
