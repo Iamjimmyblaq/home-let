@@ -34,7 +34,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <RoleRouter />
-          <RouteDebugPanel />
+          {import.meta.env.DEV && <RouteDebugPanel />}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/listings" element={<Listings />} />
