@@ -80,28 +80,51 @@ const seedToUnified = (p: SeedProperty): UnifiedProperty => {
   };
 };
 
-const dbToUnified = (l: DbListing, profileMap: Map<string, any>): UnifiedProperty => {
+const isDirectUrl = (value?: string | null) => !!value && (/^(https?:|data:|blob:|\/)/.test(value));
+
+const pathFromStorageUrl = (value: string, bucket: string) => {
+  const marker = `/object/public/${bucket}/`;
+  const index = value.indexOf(marker);
+  return index >= 0 ? decodeURIComponent(value.slice(index + marker.length).split('?')[0]) : value;
+};
+
+const signedStorageUrl = async (bucket: string, value?: string | null) => {
+  if (!value) return null;
+  if (isDirectUrl(value) && !value.includes(`/object/public/${bucket}/`)) return value;
+  const path = pathFromStorageUrl(value, bucket);
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24);
+  return data?.signedUrl ?? value;
+};
+
+const dbToUnified = (l: DbListing, profileMap: Map<string, any>, gallery: string[], avatarUrl: string | null): UnifiedProperty => {
   const prof = profileMap.get(l.agent_id);
   return {
     id: l.id, source: 'db', title: l.title, type: l.type, price: Number(l.price),
     location: l.location, city: l.city || '', state: l.state || '',
     beds: l.bedrooms, baths: l.bathrooms, sqm: l.area_sqm || 0,
-    image: l.images[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200',
-    gallery: l.images.length ? l.images : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200'],
+    image: gallery[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200',
+    gallery: gallery.length ? gallery : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200'],
     agentId: l.agent_id,
     agentName: prof?.full_name || 'Agent',
-    agentAvatar: prof?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${prof?.full_name || 'A'}`,
+    agentAvatar: avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${prof?.full_name || 'A'}`,
     agentAgency: prof?.agency_name || 'Independent',
     agentPhone: prof?.phone || '',
     agentVerified: prof?.kyc_status === 'verified',
     verified: l.status === 'verified',
     features: l.amenities,
     description: l.description || '',
-    hasVirtualTour: !!l.tour_url,
+    hasVirtualTour: !!l.tour_url || gallery.length > 0,
     tourUrl: l.tour_url,
     latitude: l.latitude,
     longitude: l.longitude,
   };
+};
+
+const resolveDbListing = async (l: DbListing, profileMap: Map<string, any>) => {
+  const prof = profileMap.get(l.agent_id);
+  const gallery = (await Promise.all((l.images || []).map((img) => signedStorageUrl('property-photos', img)))).filter(Boolean) as string[];
+  const avatarUrl = await signedStorageUrl('avatars', prof?.avatar_url);
+  return dbToUnified(l, profileMap, gallery, avatarUrl);
 };
 
 export const useListings = (opts?: { agentId?: string; includeUnverified?: boolean }) => {
@@ -123,7 +146,7 @@ export const useListings = (opts?: { agentId?: string; includeUnverified?: boole
       profileMap = new Map((profs || []).map((p: any) => [p.user_id, p]));
     }
 
-    const dbUnified = filtered.map((r) => dbToUnified(r, profileMap));
+    const dbUnified = await Promise.all(filtered.map((r) => resolveDbListing(r, profileMap)));
     if (opts?.agentId) {
       setItems(dbUnified);
     } else {
@@ -153,7 +176,7 @@ export const useListing = (id?: string) => {
       if (data) {
         const { data: prof } = await supabase.from('profiles').select('*').eq('user_id', (data as any).agent_id).maybeSingle();
         const map = new Map([[(data as any).agent_id, prof]]);
-        setItem(dbToUnified(data as DbListing, map));
+        setItem(await resolveDbListing(data as DbListing, map));
       }
       setLoading(false);
     })();
