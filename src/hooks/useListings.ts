@@ -125,6 +125,10 @@ const dbToUnified = (l: DbListing, profileMap: Map<string, any>, gallery: string
     tourUrl: l.tour_url,
     latitude: l.latitude,
     longitude: l.longitude,
+    featured: !!l.featured,
+    boostUntil: l.boost_until ?? null,
+    certUrl: l.cert_url ?? null,
+    certType: l.cert_type ?? null,
   };
 };
 
@@ -132,7 +136,8 @@ const resolveDbListing = async (l: DbListing, profileMap: Map<string, any>) => {
   const prof = profileMap.get(l.agent_id);
   const gallery = (await Promise.all((l.images || []).map((img) => signedStorageUrl('property-photos', img)))).filter(Boolean) as string[];
   const avatarUrl = await signedStorageUrl('avatars', prof?.avatar_url);
-  return dbToUnified(l, profileMap, gallery, avatarUrl);
+  const certUrl = await signedStorageUrl('property-photos', l.cert_url);
+  return { ...dbToUnified(l, profileMap, gallery, avatarUrl), certUrl };
 };
 
 export const useListings = (opts?: { agentId?: string; includeUnverified?: boolean }) => {
