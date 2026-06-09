@@ -7,6 +7,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
+import { NIGERIAN_STATES } from '@/data/nigerianStates';
 
 const Listings = () => {
   const [params, setParams] = useSearchParams();
