@@ -34,7 +34,7 @@ export type UnifiedProperty = {
   id: string;
   source: 'seed' | 'db';
   title: string;
-  type: 'rent' | 'sale' | 'shortlet';
+  type: 'rent' | 'sale' | 'shortlet' | 'hotel';
   price: number;
   location: string;
   city: string;
