@@ -57,6 +57,10 @@ export type UnifiedProperty = {
   tourUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  featured?: boolean;
+  boostUntil?: string | null;
+  certUrl?: string | null;
+  certType?: string | null;
 };
 
 const seedCoords: Record<string, { latitude: number; longitude: number }> = {
