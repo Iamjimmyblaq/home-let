@@ -137,51 +137,173 @@ const AgentProfileForm = () => {
 };
 
 
-const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: () => void; disabled?: boolean; disabledReason?: string }) => {
-  const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
+type ListingFormState = {
+  title: string; type: string; price: string; bedrooms: string; bathrooms: string; area: string;
+  location: string; city: string; state: string; latitude: string; longitude: string;
+  description: string; amenities: string; tour: string;
+  cert_type: string; cert_url: string;
+};
+
+const emptyForm: ListingFormState = {
+  title: '', type: 'rent', price: '', bedrooms: '2', bathrooms: '2', area: '120',
+  location: '', city: '', state: 'Lagos', latitude: '', longitude: '', description: '', amenities: '', tour: '',
+  cert_type: '', cert_url: '',
+};
+
+const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }: {
+  f: ListingFormState; setF: (u: ListingFormState) => void;
+  images: string[]; setImages: (u: string[] | ((p: string[]) => string[])) => void;
+  busy: boolean; setBusy: (b: boolean) => void; userId: string;
+}) => {
   const [geocoding, setGeocoding] = useState(false);
-  const [f, setF] = useState({
-    title: '', type: 'rent', price: '', bedrooms: '2', bathrooms: '2', area: '120',
-    location: '', city: '', state: 'Lagos', latitude: '', longitude: '', description: '', amenities: '', tour: '',
-  });
 
   const onPickImages = async (files: FileList | null) => {
-    if (!files?.length || !user) return;
+    if (!files?.length) return;
     setBusy(true);
     const uploaded: string[] = [];
     for (const file of Array.from(files)) {
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const { error } = await supabase.storage.from('property-photos').upload(path, file, { contentType: file.type, upsert: false });
       if (error) { toast.error(`${file.name}: ${error.message}`); continue; }
-      const { data: pub } = supabase.storage.from('property-photos').getPublicUrl(path);
-      uploaded.push(pub.publicUrl);
+      uploaded.push(path);
     }
     setImages((prev) => [...prev, ...uploaded]);
     setBusy(false);
     if (uploaded.length) toast.success(`${uploaded.length} photo(s) uploaded`);
   };
 
-  const removeImage = (url: string) => setImages((prev) => prev.filter((u) => u !== url));
+  const onPickCert = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
+    const path = `${userId}/cert-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('property-photos').upload(path, file, { contentType: file.type, upsert: false });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setF({ ...f, cert_url: path });
+    toast.success('Certificate attached');
+  };
 
   const geocode = async () => {
     const q = [f.location, f.city, f.state, 'Nigeria'].filter(Boolean).join(', ');
     if (!q.trim()) { toast.error('Enter an address first'); return; }
     setGeocoding(true);
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`, {
-        headers: { 'Accept-Language': 'en' },
-      });
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`, { headers: { 'Accept-Language': 'en' } });
       const data = await r.json();
       if (!data?.[0]) { toast.error('Address not found, drop a pin manually.'); return; }
-      setF((p) => ({ ...p, latitude: String(data[0].lat), longitude: String(data[0].lon) }));
+      setF({ ...f, latitude: String(data[0].lat), longitude: String(data[0].lon) });
       toast.success('Coordinates filled from address');
     } catch (e: any) { toast.error(e.message || 'Geocode failed'); }
     finally { setGeocoding(false); }
   };
+
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+  useEffect(() => {
+    (async () => {
+      const out: Record<string, string> = {};
+      for (const img of images) {
+        if (/^https?:|^blob:|^data:/.test(img)) { out[img] = img; continue; }
+        const { data } = await supabase.storage.from('property-photos').createSignedUrl(img, 60 * 60);
+        if (data?.signedUrl) out[img] = data.signedUrl;
+      }
+      setPreviews(out);
+    })();
+  }, [images]);
+
+  return (
+    <>
+      <div><Label>Title</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} required /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label>Type</Label>
+          <Select value={f.type} onValueChange={(v) => setF({ ...f, type: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="rent">For Rent</SelectItem>
+              <SelectItem value="sale">For Sale</SelectItem>
+              <SelectItem value="shortlet">Short-let</SelectItem>
+              <SelectItem value="hotel">Hotel</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div><Label>Price (₦)</Label><Input type="number" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} required /></div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div><Label>Beds</Label><Input type="number" value={f.bedrooms} onChange={(e) => setF({ ...f, bedrooms: e.target.value })} /></div>
+        <div><Label>Baths</Label><Input type="number" value={f.bathrooms} onChange={(e) => setF({ ...f, bathrooms: e.target.value })} /></div>
+        <div><Label>Area (m²)</Label><Input type="number" value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })} /></div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required placeholder="Lekki Phase 1" /></div>
+        <div><Label>City</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder="Lekki" /></div>
+        <div><Label>State</Label>
+          <Select value={f.state} onValueChange={(v) => setF({ ...f, state: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+        <div><Label>Latitude</Label><Input type="number" step="any" value={f.latitude} onChange={(e) => setF({ ...f, latitude: e.target.value })} placeholder="6.4478" /></div>
+        <div><Label>Longitude</Label><Input type="number" step="any" value={f.longitude} onChange={(e) => setF({ ...f, longitude: e.target.value })} placeholder="3.4723" /></div>
+        <Button type="button" variant="outline" onClick={geocode} disabled={geocoding}>{geocoding ? 'Locating…' : 'Find on map'}</Button>
+      </div>
+      <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={3} /></div>
+      <div><Label>Amenities (comma separated)</Label><Input value={f.amenities} onChange={(e) => setF({ ...f, amenities: e.target.value })} placeholder="Pool, Gym, Security" /></div>
+      <div>
+        <Label>Property photos (multiple)</Label>
+        <label className="mt-1 flex items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer hover:bg-secondary/40 transition">
+          <input type="file" className="hidden" accept="image/*" multiple disabled={busy} onChange={(e) => onPickImages(e.target.files)} />
+          <span className="text-sm text-muted-foreground">{busy ? 'Uploading…' : 'Click to add photos — they auto-build the virtual tour'}</span>
+        </label>
+        {images.length > 0 && (
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {images.map((img) => (
+              <div key={img} className="relative aspect-square rounded-lg overflow-hidden border group">
+                <img src={previews[img] || ''} alt="" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setImages((prev) => prev.filter((u) => u !== img))} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100">×</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div><Label>360° tour URL (optional)</Label><Input value={f.tour} onChange={(e) => setF({ ...f, tour: e.target.value })} placeholder="Leave blank — virtual tour is auto-built from your photos" /></div>
+      {f.type === 'sale' && (
+        <div className="border rounded-xl p-3 bg-secondary/30 space-y-2">
+          <div className="text-sm font-semibold flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-success" /> Ownership certificate (optional, helps buyers trust your listing)</div>
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <Select value={f.cert_type} onValueChange={(v) => setF({ ...f, cert_type: v })}>
+              <SelectTrigger><SelectValue placeholder="Certificate type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="C of O">Certificate of Occupancy (C of O)</SelectItem>
+                <SelectItem value="Governor's Consent">Governor's Consent</SelectItem>
+                <SelectItem value="Deed of Assignment">Deed of Assignment</SelectItem>
+                <SelectItem value="Survey Plan">Registered Survey Plan</SelectItem>
+                <SelectItem value="Excision">Excision / Gazette</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="inline-flex">
+              <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => onPickCert(e.target.files?.[0])} />
+              <Button type="button" variant="outline" asChild><span>{f.cert_url ? 'Replace file' : 'Attach file'}</span></Button>
+            </label>
+          </div>
+          {f.cert_url && <div className="text-xs text-success">✓ Document attached</div>}
+        </div>
+      )}
+    </>
+  );
+};
+
+const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: () => void; disabled?: boolean; disabledReason?: string }) => {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [f, setF] = useState<ListingFormState>(emptyForm);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,18 +315,20 @@ const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: 
       bedrooms: +f.bedrooms, bathrooms: +f.bathrooms, area_sqm: +f.area,
       location: f.location, city: f.city, state: f.state, description: f.description,
       amenities: f.amenities.split(',').map((s) => s.trim()).filter(Boolean),
-      images,
-      tour_url: f.tour || null,
+      images, tour_url: f.tour || null,
       latitude: f.latitude ? Number(f.latitude) : null,
       longitude: f.longitude ? Number(f.longitude) : null,
+      cert_type: f.type === 'sale' && f.cert_type ? f.cert_type : null,
+      cert_url: f.type === 'sale' && f.cert_url ? f.cert_url : null,
       status: 'pending',
     } as any);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success('Listing submitted — pending admin verification.');
-    setImages([]);
+    setImages([]); setF(emptyForm);
     setOpen(false); onCreated();
   };
+  if (!user) return null;
   return (
     <Dialog open={open} onOpenChange={(v) => !disabled && setOpen(v)}>
       <DialogTrigger asChild>
@@ -215,52 +339,123 @@ const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Create a new listing</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          <div><Label>Title</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} required /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Type</Label><Select value={f.type} onValueChange={(v) => setF({ ...f, type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="rent">For Rent</SelectItem><SelectItem value="sale">For Sale</SelectItem><SelectItem value="shortlet">Short-let</SelectItem></SelectContent></Select></div>
-            <div><Label>Price (₦)</Label><Input type="number" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} required /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div><Label>Beds</Label><Input type="number" value={f.bedrooms} onChange={(e) => setF({ ...f, bedrooms: e.target.value })} /></div>
-            <div><Label>Baths</Label><Input type="number" value={f.bathrooms} onChange={(e) => setF({ ...f, bathrooms: e.target.value })} /></div>
-            <div><Label>Area (m²)</Label><Input type="number" value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })} /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required placeholder="Lekki Phase 1" /></div>
-            <div><Label>City</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder="Lekki" /></div>
-            <div><Label>State</Label><Select value={f.state} onValueChange={(v) => setF({ ...f, state: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Lagos">Lagos</SelectItem><SelectItem value="Abuja">Abuja</SelectItem><SelectItem value="Rivers">Rivers</SelectItem></SelectContent></Select></div>
-          </div>
-          <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
-            <div><Label>Latitude</Label><Input type="number" step="any" min="-90" max="90" value={f.latitude} onChange={(e) => setF({ ...f, latitude: e.target.value })} placeholder="6.4478" /></div>
-            <div><Label>Longitude</Label><Input type="number" step="any" min="-180" max="180" value={f.longitude} onChange={(e) => setF({ ...f, longitude: e.target.value })} placeholder="3.4723" /></div>
-            <Button type="button" variant="outline" onClick={geocode} disabled={geocoding}>{geocoding ? 'Locating…' : 'Find on map'}</Button>
-          </div>
-          <div><Label>Description</Label><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} rows={3} /></div>
-          <div><Label>Amenities (comma separated)</Label><Input value={f.amenities} onChange={(e) => setF({ ...f, amenities: e.target.value })} placeholder="Pool, Gym, Security" /></div>
-          <div>
-            <Label>Property photos (multiple)</Label>
-            <label className="mt-1 flex items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer hover:bg-secondary/40 transition">
-              <input type="file" className="hidden" accept="image/*" multiple disabled={busy} onChange={(e) => onPickImages(e.target.files)} />
-              <span className="text-sm text-muted-foreground">{busy ? 'Uploading…' : 'Click to add photos — they auto-build the virtual tour'}</span>
-            </label>
-            {images.length > 0 && (
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                {images.map((url) => (
-                  <div key={url} className="relative aspect-square rounded-lg overflow-hidden border group">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeImage(url)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100">×</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div><Label>360° tour URL (optional)</Label><Input value={f.tour} onChange={(e) => setF({ ...f, tour: e.target.value })} placeholder="Leave blank — virtual tour is auto-built from your photos" /></div>
+          <ListingFormFields f={f} setF={setF} images={images} setImages={setImages} busy={busy} setBusy={setBusy} userId={user.id} />
           <DialogFooter><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Submit for review'}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 };
+
+const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved: () => void }) => {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [f, setF] = useState<ListingFormState>(emptyForm);
+
+  const loadRow = async () => {
+    const { data } = await supabase.from('listings').select('*').eq('id', listingId).maybeSingle();
+    if (!data) return;
+    const d: any = data;
+    setF({
+      title: d.title || '', type: d.type || 'rent', price: String(d.price ?? ''),
+      bedrooms: String(d.bedrooms ?? 0), bathrooms: String(d.bathrooms ?? 0), area: String(d.area_sqm ?? 0),
+      location: d.location || '', city: d.city || '', state: d.state || 'Lagos',
+      latitude: d.latitude != null ? String(d.latitude) : '', longitude: d.longitude != null ? String(d.longitude) : '',
+      description: d.description || '', amenities: (d.amenities || []).join(', '), tour: d.tour_url || '',
+      cert_type: d.cert_type || '', cert_url: d.cert_url || '',
+    });
+    setImages(d.images || []);
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.from('listings').update({
+      title: f.title, type: f.type as any, price: Number(f.price),
+      bedrooms: +f.bedrooms, bathrooms: +f.bathrooms, area_sqm: +f.area,
+      location: f.location, city: f.city, state: f.state, description: f.description,
+      amenities: f.amenities.split(',').map((s) => s.trim()).filter(Boolean),
+      images, tour_url: f.tour || null,
+      latitude: f.latitude ? Number(f.latitude) : null,
+      longitude: f.longitude ? Number(f.longitude) : null,
+      cert_type: f.type === 'sale' && f.cert_type ? f.cert_type : null,
+      cert_url: f.type === 'sale' && f.cert_url ? f.cert_url : null,
+    } as any).eq('id', listingId);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Listing updated');
+    setOpen(false); onSaved();
+  };
+
+  if (!user) return null;
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) loadRow(); }}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" title="Edit listing"><Edit className="h-4 w-4" /></Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Edit listing</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <ListingFormFields f={f} setF={setF} images={images} setImages={setImages} busy={busy} setBusy={setBusy} userId={user.id} />
+          <DialogFooter><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const BoostDialog = ({ listingId, title, walletBalance, onSubmitted }: { listingId: string; title: string; walletBalance: number; onSubmitted: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const [days, setDays] = useState(2);
+  const [busy, setBusy] = useState(false);
+  const fee = boostFeeFor(days);
+  const insufficient = walletBalance < fee;
+
+  const submit = async () => {
+    setBusy(true);
+    const { error } = await supabase.from('listings').update({
+      boost_status: 'pending', boost_days: days, boost_fee: fee, boost_requested_at: new Date().toISOString(),
+    } as any).eq('id', listingId);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Boost request submitted for admin review.');
+    setOpen(false); onSubmitted();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" title="Boost listing"><Rocket className="h-4 w-4 text-accent" /></Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent" /> Boost "{title}"</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Promoted listings appear at the top of browse pages and category cards. Fee is deducted from your wallet only when admin approves.</p>
+          <div>
+            <Label>Number of days</Label>
+            <Input type="number" min={2} max={60} value={days} onChange={(e) => setDays(Math.max(2, Math.min(60, Number(e.target.value) || 2)))} />
+            <div className="text-xs text-muted-foreground mt-1">Base: ₦2,500 for 2 days. Extra days at ₦1,250/day.</div>
+          </div>
+          <div className="bg-secondary/40 rounded-lg p-3 flex justify-between text-sm">
+            <span>Fee</span><span className="font-semibold">{naira(fee)}</span>
+          </div>
+          <div className="text-xs flex justify-between">
+            <span>Wallet balance</span>
+            <span className={insufficient ? 'text-destructive' : 'text-success'}>{naira(walletBalance)}</span>
+          </div>
+          {insufficient && <div className="text-xs text-destructive">Top up your wallet to submit this boost request.</div>}
+          <DialogFooter>
+            <Button onClick={submit} disabled={busy || insufficient}>{busy ? 'Submitting…' : 'Submit for review'}</Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 
 
 const AgentDashboard = () => {
