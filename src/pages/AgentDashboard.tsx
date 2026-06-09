@@ -551,13 +551,18 @@ const AgentDashboard = () => {
                 <div key={p.id} className="flex items-center gap-4 p-4 border-b last:border-0 hover:bg-secondary/30 transition-colors">
                   <Link to={`/property/${p.id}`}><img src={p.image} className="h-16 w-16 rounded-lg object-cover" /></Link>
                   <Link to={`/property/${p.id}`} className="flex-1">
-                    <div className="font-medium">{p.title}</div>
+                    <div className="font-medium flex items-center gap-2">
+                      {p.title}
+                      {p.featured && <Badge className="bg-accent text-accent-foreground text-[10px]"><Sparkles className="h-3 w-3 mr-1" />Boosted</Badge>}
+                    </div>
                     <div className="text-xs text-muted-foreground">{p.location} · {p.type}</div>
                   </Link>
                   <div className="text-right">
                     <div className="font-bold text-primary">{shortNaira(p.price)}</div>
                     <Badge variant={p.verified ? 'default' : 'secondary'} className="text-xs">{p.verified ? 'Verified' : 'Pending'}</Badge>
                   </div>
+                  <EditListingDialog listingId={p.id} onSaved={reload} />
+                  <BoostDialog listingId={p.id} title={p.title} walletBalance={wallet.available_balance} onSubmitted={reload} />
                   <Button size="icon" variant="ghost" onClick={() => deleteListing(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               ))}
