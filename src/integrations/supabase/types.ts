@@ -272,7 +272,14 @@ export type Database = {
           area_sqm: number | null
           bathrooms: number | null
           bedrooms: number | null
+          boost_days: number | null
+          boost_fee: number | null
+          boost_requested_at: string | null
+          boost_status: string
+          boost_until: string | null
           category: string | null
+          cert_type: string | null
+          cert_url: string | null
           city: string | null
           created_at: string
           description: string | null
@@ -296,7 +303,14 @@ export type Database = {
           area_sqm?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          boost_days?: number | null
+          boost_fee?: number | null
+          boost_requested_at?: string | null
+          boost_status?: string
+          boost_until?: string | null
           category?: string | null
+          cert_type?: string | null
+          cert_url?: string | null
           city?: string | null
           created_at?: string
           description?: string | null
@@ -320,7 +334,14 @@ export type Database = {
           area_sqm?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          boost_days?: number | null
+          boost_fee?: number | null
+          boost_requested_at?: string | null
+          boost_status?: string
+          boost_until?: string | null
           category?: string | null
+          cert_type?: string | null
+          cert_url?: string | null
           city?: string | null
           created_at?: string
           description?: string | null
@@ -542,6 +563,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_boost: { Args: { _listing_id: string }; Returns: Json }
       claim_username: {
         Args: { _email: string; _preferred: string }
         Returns: string
@@ -561,6 +583,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reject_boost: { Args: { _listing_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "user" | "agent" | "admin" | "moderator"
