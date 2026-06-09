@@ -160,11 +160,13 @@ export const useListings = (opts?: { agentId?: string; includeUnverified?: boole
     }
 
     const dbUnified = await Promise.all(filtered.map((r) => resolveDbListing(r, profileMap)));
+    // Featured / boosted first
+    const rank = (p: UnifiedProperty) => (p.featured ? 0 : 1);
+    const sorted = [...dbUnified].sort((a, b) => rank(a) - rank(b));
     if (opts?.agentId) {
-      setItems(dbUnified);
+      setItems(sorted);
     } else {
-      // blend with seeded mock data for browse pages
-      setItems([...dbUnified, ...seedProperties.map(seedToUnified)]);
+      setItems([...sorted, ...seedProperties.map(seedToUnified)]);
     }
     setLoading(false);
   }, [opts?.agentId, opts?.includeUnverified]);
