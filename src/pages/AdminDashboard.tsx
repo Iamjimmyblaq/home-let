@@ -1,12 +1,14 @@
 import { Layout } from '@/components/Layout';
-import { Building2, Users, ShieldCheck, AlertTriangle, TrendingUp, Check, X, FileText, UserCog } from 'lucide-react';
+import { Building2, Users, ShieldCheck, AlertTriangle, TrendingUp, Check, X, FileText, UserCog, Eye, Star, Rocket } from 'lucide-react';
 import { naira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BackButton } from '@/components/BackButton';
