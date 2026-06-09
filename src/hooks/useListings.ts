@@ -7,7 +7,7 @@ export type DbListing = {
   agent_id: string;
   title: string;
   description: string | null;
-  type: 'rent' | 'sale' | 'shortlet';
+  type: 'rent' | 'sale' | 'shortlet' | 'hotel';
   category: string | null;
   price: number;
   bedrooms: number;
@@ -23,6 +23,10 @@ export type DbListing = {
   featured: boolean;
   latitude: number | null;
   longitude: number | null;
+  cert_url?: string | null;
+  cert_type?: string | null;
+  boost_status?: string | null;
+  boost_until?: string | null;
 };
 
 // Unified card-friendly type combining seeded mock data + real DB rows
@@ -30,7 +34,7 @@ export type UnifiedProperty = {
   id: string;
   source: 'seed' | 'db';
   title: string;
-  type: 'rent' | 'sale' | 'shortlet';
+  type: 'rent' | 'sale' | 'shortlet' | 'hotel';
   price: number;
   location: string;
   city: string;
@@ -53,6 +57,10 @@ export type UnifiedProperty = {
   tourUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  featured?: boolean;
+  boostUntil?: string | null;
+  certUrl?: string | null;
+  certType?: string | null;
 };
 
 const seedCoords: Record<string, { latitude: number; longitude: number }> = {
@@ -117,6 +125,10 @@ const dbToUnified = (l: DbListing, profileMap: Map<string, any>, gallery: string
     tourUrl: l.tour_url,
     latitude: l.latitude,
     longitude: l.longitude,
+    featured: !!l.featured,
+    boostUntil: l.boost_until ?? null,
+    certUrl: l.cert_url ?? null,
+    certType: l.cert_type ?? null,
   };
 };
 
@@ -124,7 +136,8 @@ const resolveDbListing = async (l: DbListing, profileMap: Map<string, any>) => {
   const prof = profileMap.get(l.agent_id);
   const gallery = (await Promise.all((l.images || []).map((img) => signedStorageUrl('property-photos', img)))).filter(Boolean) as string[];
   const avatarUrl = await signedStorageUrl('avatars', prof?.avatar_url);
-  return dbToUnified(l, profileMap, gallery, avatarUrl);
+  const certUrl = await signedStorageUrl('property-photos', l.cert_url);
+  return { ...dbToUnified(l, profileMap, gallery, avatarUrl), certUrl };
 };
 
 export const useListings = (opts?: { agentId?: string; includeUnverified?: boolean }) => {
@@ -147,11 +160,13 @@ export const useListings = (opts?: { agentId?: string; includeUnverified?: boole
     }
 
     const dbUnified = await Promise.all(filtered.map((r) => resolveDbListing(r, profileMap)));
+    // Featured / boosted first
+    const rank = (p: UnifiedProperty) => (p.featured ? 0 : 1);
+    const sorted = [...dbUnified].sort((a, b) => rank(a) - rank(b));
     if (opts?.agentId) {
-      setItems(dbUnified);
+      setItems(sorted);
     } else {
-      // blend with seeded mock data for browse pages
-      setItems([...dbUnified, ...seedProperties.map(seedToUnified)]);
+      setItems([...sorted, ...seedProperties.map(seedToUnified)]);
     }
     setLoading(false);
   }, [opts?.agentId, opts?.includeUnverified]);

@@ -109,6 +109,21 @@ const PropertyDetail = () => {
               </div>
             )}
 
+            {p.type === 'sale' && p.certUrl && (
+              <div className="rounded-2xl border bg-success/5 p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="h-5 w-5 text-success" />
+                  <div>
+                    <div className="font-semibold text-sm">Ownership documentation provided</div>
+                    <div className="text-xs text-muted-foreground">{p.certType || 'Property certificate'} attached by the agent.</div>
+                  </div>
+                </div>
+                <a href={p.certUrl} target="_blank" rel="noreferrer" className="text-sm text-primary inline-flex items-center gap-1 hover:underline">
+                  View document <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            )}
+
             {p.gallery.length > 0 && (
               <div className="rounded-2xl gradient-hero text-primary-foreground p-8 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>

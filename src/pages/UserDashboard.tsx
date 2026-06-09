@@ -114,6 +114,18 @@ const UserDashboard = () => {
           </div>
         </div>
 
+        <div className="mb-10">
+          <div className="flex items-end justify-between mb-4">
+            <h2 className="font-bold text-xl flex items-center gap-2"><Eye className="h-5 w-5 text-primary" />Latest verified listings</h2>
+            <Link to="/listings" className="text-sm text-primary hover:underline">Browse all →</Link>
+          </div>
+          {items.length ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">{items.slice(0, 8).map((p) => <PropertyCard key={p.id} p={p} />)}</div>
+          ) : (
+            <div className="text-center text-muted-foreground py-10 border rounded-2xl border-dashed">No listings yet.</div>
+          )}
+        </div>
+
         <div>
           <h2 className="font-bold text-xl mb-4 flex items-center gap-2"><Heart className="h-5 w-5 text-destructive" />Saved homes</h2>
           {favs.length ? (

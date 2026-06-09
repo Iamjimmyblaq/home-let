@@ -7,6 +7,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
+import { NIGERIAN_STATES } from '@/data/nigerianStates';
 
 const Listings = () => {
   const [params, setParams] = useSearchParams();
@@ -47,14 +48,14 @@ const Listings = () => {
                 <SelectItem value="rent">For Rent</SelectItem>
                 <SelectItem value="sale">For Sale</SelectItem>
                 <SelectItem value="shortlet">Short-let</SelectItem>
+                <SelectItem value="hotel">Hotel</SelectItem>
               </SelectContent>
             </Select>
             <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-full lg:w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger className="w-full lg:w-44"><SelectValue placeholder="State" /></SelectTrigger>
+              <SelectContent className="max-h-72">
                 <SelectItem value="all">All states</SelectItem>
-                <SelectItem value="Lagos">Lagos</SelectItem>
-                <SelectItem value="Abuja">Abuja</SelectItem>
+                {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sort} onValueChange={setSort}>
