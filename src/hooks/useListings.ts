@@ -7,7 +7,7 @@ export type DbListing = {
   agent_id: string;
   title: string;
   description: string | null;
-  type: 'rent' | 'sale' | 'shortlet';
+  type: 'rent' | 'sale' | 'shortlet' | 'hotel';
   category: string | null;
   price: number;
   bedrooms: number;
@@ -23,6 +23,10 @@ export type DbListing = {
   featured: boolean;
   latitude: number | null;
   longitude: number | null;
+  cert_url?: string | null;
+  cert_type?: string | null;
+  boost_status?: string | null;
+  boost_until?: string | null;
 };
 
 // Unified card-friendly type combining seeded mock data + real DB rows
