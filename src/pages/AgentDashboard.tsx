@@ -1,6 +1,6 @@
 import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
-import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2 } from 'lucide-react';
+import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, Edit, Rocket, Sparkles } from 'lucide-react';
 import { naira, shortNaira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,12 @@ import { toast } from 'sonner';
 import { BackButton } from '@/components/BackButton';
 import { WithdrawPanel } from '@/components/WithdrawPanel';
 import { RaiseDisputeButton, MyDisputesList } from '@/components/Disputes';
+import { NIGERIAN_STATES } from '@/data/nigerianStates';
+
+const BOOST_BASE_FEE = 2500; // ₦2,500 for 2 days
+const BOOST_BASE_DAYS = 2;
+const boostFeeFor = (days: number) =>
+  days <= BOOST_BASE_DAYS ? BOOST_BASE_FEE : BOOST_BASE_FEE + Math.ceil((days - BOOST_BASE_DAYS) * (BOOST_BASE_FEE / BOOST_BASE_DAYS));
 
 type Insp = { id: string; listing_id: string; user_id: string; mode: string; scheduled_at: string; status: string; fee: number };
 
