@@ -94,20 +94,142 @@ const RolesPanel = () => {
   );
 };
 
+const UsersListDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  const [people, setPeople] = useState<any[]>([]);
+  const [q, setQ] = useState('');
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(500);
+      setPeople(data || []);
+    })();
+  }, [open]);
+  const filtered = people.filter((p) =>
+    !q.trim() ? true : (p.full_name || '' + p.username || '' + p.phone || '' + p.agency_name || '').toLowerCase().includes(q.toLowerCase())
+  );
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>All users ({people.length})</DialogTitle></DialogHeader>
+        <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-3" />
+        <div className="divide-y">
+          {filtered.map((p) => (
+            <div key={p.id} className="flex items-center gap-3 py-2.5">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">{(p.full_name || '?').charAt(0)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate flex items-center gap-1">
+                  {p.full_name || 'Unnamed'}
+                  {p.kyc_status === 'verified' && <ShieldCheck className="h-3.5 w-3.5 text-success" />}
+                  {p.username && <span className="text-xs text-muted-foreground font-normal">@{p.username}</span>}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">{p.agency_name || '—'} · {p.phone || 'no phone'} · KYC {p.kyc_status}</div>
+              </div>
+              <Badge variant="outline" className="capitalize text-xs">{p.kyc_status}</Badge>
+            </div>
+          ))}
+          {filtered.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">No matches.</div>}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const BoostQueue = ({ onChange }: { onChange: () => void }) => {
+  const [rows, setRows] = useState<any[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const load = async () => {
+    const { data } = await supabase.from('listings').select('*').eq('boost_status', 'pending').order('boost_requested_at', { ascending: false });
+    setRows(data || []);
+  };
+  useEffect(() => { load(); }, []);
+  const approve = async (id: string) => {
+    setBusy(id);
+    const { error } = await supabase.rpc('approve_boost', { _listing_id: id });
+    setBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Boost approved — fee deducted from agent wallet');
+    load(); onChange();
+  };
+  const reject = async (id: string) => {
+    setBusy(id);
+    const { error } = await supabase.rpc('reject_boost', { _listing_id: id });
+    setBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Boost request rejected');
+    load(); onChange();
+  };
+  return (
+    <div className="bg-card border rounded-2xl overflow-hidden">
+      {rows.length === 0 ? <div className="p-6 text-center text-muted-foreground">No pending boost requests.</div> : rows.map((p) => (
+        <div key={p.id} className="flex items-center gap-4 p-4 border-b last:border-0">
+          <Rocket className="h-5 w-5 text-accent" />
+          <div className="flex-1">
+            <div className="font-medium text-sm">{p.title}</div>
+            <div className="text-xs text-muted-foreground">{p.location} · {p.boost_days} days · {naira(Number(p.boost_fee || 0))}</div>
+          </div>
+          <Link to={`/property/${p.id}`} target="_blank" className="text-xs text-primary inline-flex items-center gap-1 hover:underline"><Eye className="h-3.5 w-3.5" /> View</Link>
+          <Button size="sm" variant="outline" disabled={busy === p.id} onClick={() => reject(p.id)}><X className="h-4 w-4" />Reject</Button>
+          <Button size="sm" disabled={busy === p.id} onClick={() => approve(p.id)}><Check className="h-4 w-4" />Approve & charge</Button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const FeaturedPanel = () => {
+  const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState('');
+  const load = async () => {
+    let query = supabase.from('listings').select('*').eq('status', 'verified').order('featured', { ascending: false }).order('created_at', { ascending: false }).limit(100);
+    const { data } = await query;
+    setRows(data || []);
+  };
+  useEffect(() => { load(); }, []);
+  const toggle = async (id: string, next: boolean) => {
+    const { error } = await supabase.from('listings').update({ featured: next } as any).eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? 'Promoted to featured' : 'Removed from featured');
+    load();
+  };
+  const filtered = rows.filter((r) => !q.trim() ? true : (r.title + r.location).toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="bg-card border rounded-2xl p-4">
+      <Input placeholder="Search verified listings…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-3" />
+      <div className="divide-y">
+        {filtered.map((p) => (
+          <div key={p.id} className="flex items-center gap-3 py-3">
+            <img src={p.images?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200'} className="h-12 w-12 rounded-lg object-cover" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate flex items-center gap-2">{p.title} {p.featured && <Star className="h-3.5 w-3.5 fill-accent text-accent" />}</div>
+              <div className="text-xs text-muted-foreground truncate">{p.location} · {p.type} · {naira(Number(p.price))}</div>
+            </div>
+            <Button size="sm" variant={p.featured ? 'outline' : 'default'} onClick={() => toggle(p.id, !p.featured)}>
+              {p.featured ? 'Unfeature' : 'Promote to top'}
+            </Button>
+          </div>
+        ))}
+        {filtered.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">No listings.</div>}
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const { role } = useAuth();
   const isModerator = role === 'moderator';
   const [agents, setAgents] = useState<Pending[]>([]);
   const [listings, setListings] = useState<Pending[]>([]);
-  const [stats, setStats] = useState({ users: 0, listings: 0, escrow: 0 });
+  const [stats, setStats] = useState({ users: 0, listings: 0, escrow: 0, boostPending: 0 });
+  const [usersOpen, setUsersOpen] = useState(false);
 
   const load = async () => {
-    const [{ data: a }, { data: l }, { count: uCount }, { count: lCount }, { data: w }] = await Promise.all([
+    const [{ data: a }, { data: l }, { count: uCount }, { count: lCount }, { data: w }, { count: bCount }] = await Promise.all([
       supabase.from('profiles').select('*').in('kyc_status', ['pending']).order('updated_at', { ascending: false }),
       supabase.from('listings').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('listings').select('*', { count: 'exact', head: true }),
       supabase.from('wallets').select('escrow_balance'),
+      supabase.from('listings').select('*', { count: 'exact', head: true }).eq('boost_status', 'pending'),
     ]);
     setAgents((a as any) || []);
     setListings((l as any) || []);
@@ -115,6 +237,7 @@ const AdminDashboard = () => {
       users: uCount || 0,
       listings: lCount || 0,
       escrow: (w || []).reduce((s: number, x: any) => s + Number(x.escrow_balance || 0), 0),
+      boostPending: bCount || 0,
     });
   };
   useEffect(() => { if (!isModerator) load(); }, [isModerator]);
@@ -144,6 +267,13 @@ const AdminDashboard = () => {
     load();
   };
 
+  const cards = [
+    { icon: Users, label: 'Total users', v: stats.users.toLocaleString(), color: 'text-primary bg-primary/10', onClick: () => setUsersOpen(true) },
+    { icon: Building2, label: 'Active listings', v: stats.listings.toLocaleString(), color: 'text-success bg-success/10' },
+    { icon: ShieldCheck, label: 'Escrow held', v: naira(stats.escrow), color: 'text-accent bg-accent/20' },
+    { icon: AlertTriangle, label: 'Pending KYC', v: agents.length, color: 'text-destructive bg-destructive/10' },
+  ];
+
   return (
     <Layout>
       <div className="container py-10">
@@ -152,24 +282,24 @@ const AdminDashboard = () => {
         <p className="text-muted-foreground mb-8">Platform-wide moderation, KYC and analytics.</p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[
-            { icon: Users, label: 'Total users', v: stats.users.toLocaleString(), color: 'text-primary bg-primary/10' },
-            { icon: Building2, label: 'Active listings', v: stats.listings.toLocaleString(), color: 'text-success bg-success/10' },
-            { icon: ShieldCheck, label: 'Escrow held', v: naira(stats.escrow), color: 'text-accent bg-accent/20' },
-            { icon: AlertTriangle, label: 'Pending KYC', v: agents.length, color: 'text-destructive bg-destructive/10' },
-          ].map((s) => (
-            <div key={s.label} className="bg-card border rounded-2xl p-5 shadow-soft">
+          {cards.map((s) => (
+            <button key={s.label} type="button" onClick={s.onClick} disabled={!s.onClick}
+              className={`bg-card border rounded-2xl p-5 shadow-soft text-left ${s.onClick ? 'hover:shadow-elegant transition-all cursor-pointer' : 'cursor-default'}`}>
               <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}><s.icon className="h-5 w-5" /></div>
               <div className="text-2xl font-bold" style={{ fontFamily: 'Sora' }}>{s.v}</div>
               <div className="text-xs text-muted-foreground">{s.label}</div>
-            </div>
+            </button>
           ))}
         </div>
 
+        <UsersListDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
+
         <Tabs defaultValue="agents">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="agents">KYC queue ({agents.length})</TabsTrigger>
             <TabsTrigger value="listings">Pending listings ({listings.length})</TabsTrigger>
+            <TabsTrigger value="boosts"><Rocket className="h-4 w-4 mr-1" />Boost queue ({stats.boostPending})</TabsTrigger>
+            <TabsTrigger value="featured"><Star className="h-4 w-4 mr-1" />Featured</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="roles"><UserCog className="h-4 w-4 mr-1" />Roles</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -200,12 +330,15 @@ const AdminDashboard = () => {
                     <div className="text-xs text-muted-foreground">{p.location} · {p.type} · {naira(Number(p.price))}</div>
                   </div>
                   <Badge variant="secondary">Pending</Badge>
+                  <Link to={`/property/${p.id}`} target="_blank" className="inline-flex"><Button size="sm" variant="outline"><Eye className="h-4 w-4" />View</Button></Link>
                   <Button variant="outline" size="sm" onClick={() => decideListing(p.id, false)}><X className="h-4 w-4" />Reject</Button>
                   <Button size="sm" onClick={() => decideListing(p.id, true)}><Check className="h-4 w-4" />Approve</Button>
                 </div>
               ))}
             </div>
           </TabsContent>
+          <TabsContent value="boosts" className="mt-4"><BoostQueue onChange={load} /></TabsContent>
+          <TabsContent value="featured" className="mt-4"><FeaturedPanel /></TabsContent>
           <TabsContent value="disputes" className="mt-4"><StaffDisputesPanel /></TabsContent>
           <TabsContent value="roles" className="mt-4"><RolesPanel /></TabsContent>
           <TabsContent value="analytics" className="mt-4">
@@ -220,5 +353,6 @@ const AdminDashboard = () => {
     </Layout>
   );
 };
+
 
 export default AdminDashboard;
