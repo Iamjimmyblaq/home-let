@@ -169,7 +169,10 @@ const PropertyDetail = () => {
           <div className="space-y-4">
             <div className="bg-card border rounded-2xl p-6 shadow-soft sticky top-20">
               <div className="text-sm text-muted-foreground">Listed price</div>
-              <div className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'Sora' }}>{priceLabel}</div>
+              <div className="text-3xl font-bold text-primary mb-1" style={{ fontFamily: 'Sora' }}>{priceLabel}</div>
+              {p.type === 'shortlet' && (p as any).nightsAvailable ? (
+                <div className="text-xs text-muted-foreground mb-3">Up to {(p as any).nightsAvailable} nights available</div>
+              ) : <div className="mb-3" />}
               <Button onClick={() => navigate(`/inspection/${p.id}`)} className="w-full mb-2" size="lg">
                 <Calendar className="h-4 w-4" /> Book inspection
               </Button>
