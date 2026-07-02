@@ -375,6 +375,7 @@ const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved:
       latitude: d.latitude != null ? String(d.latitude) : '', longitude: d.longitude != null ? String(d.longitude) : '',
       description: d.description || '', amenities: (d.amenities || []).join(', '), tour: d.tour_url || '',
       cert_type: d.cert_type || '', cert_url: d.cert_url || '',
+      nights_available: d.nights_available != null ? String(d.nights_available) : '',
     });
     setImages(d.images || []);
   };
