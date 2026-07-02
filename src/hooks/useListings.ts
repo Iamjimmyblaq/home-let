@@ -27,6 +27,7 @@ export type DbListing = {
   cert_type?: string | null;
   boost_status?: string | null;
   boost_until?: string | null;
+  nights_available?: number | null;
 };
 
 // Unified card-friendly type combining seeded mock data + real DB rows
