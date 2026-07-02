@@ -394,6 +394,7 @@ const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved:
       longitude: f.longitude ? Number(f.longitude) : null,
       cert_type: f.type === 'sale' && f.cert_type ? f.cert_type : null,
       cert_url: f.type === 'sale' && f.cert_url ? f.cert_url : null,
+      nights_available: (f.type === 'shortlet' || f.type === 'hotel') && f.nights_available ? Number(f.nights_available) : null,
     } as any).eq('id', listingId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
