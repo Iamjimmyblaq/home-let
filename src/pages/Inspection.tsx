@@ -58,7 +58,7 @@ const Inspection = () => {
   return (
     <Layout>
       <div className="container py-10 max-w-5xl">
-        <BackButton />
+        
         <h1 className="text-3xl font-bold mb-6">Book an inspection</h1>
         <div className="grid lg:grid-cols-3 gap-6">
           <form onSubmit={submit} className="lg:col-span-2 bg-card border rounded-2xl p-6 space-y-5">

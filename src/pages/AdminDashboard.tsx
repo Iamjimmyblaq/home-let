@@ -246,7 +246,7 @@ const AdminDashboard = () => {
     return (
       <Layout>
         <div className="container py-10">
-          <BackButton to="/" label="Home" />
+          
           <h1 className="text-3xl font-bold mb-1">Moderator Console</h1>
           <p className="text-muted-foreground mb-8">Resolve open disputes between users and agents.</p>
           <StaffDisputesPanel />
@@ -277,7 +277,7 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
-        <BackButton to="/" label="Home" />
+        
         <h1 className="text-3xl font-bold mb-1">Admin Console</h1>
         <p className="text-muted-foreground mb-8">Platform-wide moderation, KYC and analytics.</p>
 
