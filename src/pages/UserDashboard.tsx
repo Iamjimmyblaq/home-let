@@ -1,7 +1,7 @@
 import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
 import { PropertyCard } from '@/components/PropertyCard';
-import { Calendar, CheckCircle2, Heart, Wallet, MessageSquare, Eye, ShieldCheck } from 'lucide-react';
+import { Calendar, CheckCircle2, Heart, Wallet, MessageSquare, Eye, ShieldCheck, Users, Trash2, Star } from 'lucide-react';
 import { naira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,61 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useListings } from '@/hooks/useListings';
-import { BackButton } from '@/components/BackButton';
 import { RaiseDisputeButton } from '@/components/Disputes';
 import { toast } from 'sonner';
 
 type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string; agent_id: string; fee: number };
 type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | null; check_in: string; check_out: string; status: string; total_amount: number };
+type AgentDir = { user_id: string; name: string; agency: string; avatar: string; verified: boolean; rating: number; listings: number };
+
+const useAgentsDirectory = () => {
+  const [items, setItems] = useState<AgentDir[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'agent');
+      const ids = (roles || []).map((r: any) => r.user_id);
+      if (!ids.length) return;
+      const [{ data: profs }, { data: lst }] = await Promise.all([
+        supabase.from('profiles').select('user_id, full_name, username, agency_name, avatar_url, kyc_status, agent_rating').in('user_id', ids),
+        supabase.from('listings').select('agent_id, status').in('agent_id', ids),
+      ]);
+      const counts: Record<string, number> = {};
+      (lst || []).forEach((l: any) => { if (l.status === 'verified') counts[l.agent_id] = (counts[l.agent_id] || 0) + 1; });
+      const rows: AgentDir[] = (profs || []).map((p: any) => ({
+        user_id: p.user_id,
+        name: p.full_name || p.username || 'Agent',
+        agency: p.agency_name || 'Independent',
+        avatar: p.avatar_url && /^https?:/.test(p.avatar_url) ? p.avatar_url : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
+        verified: p.kyc_status === 'verified',
+        rating: Number(p.agent_rating || 4.6),
+        listings: counts[p.user_id] || 0,
+      }));
+      rows.sort((a, b) => Number(b.verified) - Number(a.verified) || b.listings - a.listings);
+      setItems(rows);
+    })();
+  }, []);
+  return items;
+};
+
+const DeleteAccountButton = () => {
+  const { signOut } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const onDelete = async () => {
+    if (!confirm('This will permanently delete your account and every trace of your data. Continue?')) return;
+    if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('admin-user-action', { body: { action: 'delete_self' } });
+    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || 'Delete failed'); setBusy(false); return; }
+    toast.success('Account deleted. Goodbye.');
+    await signOut();
+    window.location.href = '/';
+  };
+  return (
+    <Button variant="destructive" size="sm" disabled={busy} onClick={onDelete}>
+      <Trash2 className="h-4 w-4" /> {busy ? 'Deleting…' : 'Delete my account'}
+    </Button>
+  );
+};
 
 const UserDashboard = () => {
   const { user, profile } = useAuth();
