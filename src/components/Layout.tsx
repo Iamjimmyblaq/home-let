@@ -1,11 +1,28 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Wallet, LogOut, User as UserIcon, Menu, X } from 'lucide-react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Wallet, LogOut, User as UserIcon, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { naira } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import logoUrl from '@/assets/logo.png';
+
+const GlobalBackButton = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  if (location.pathname === '/') return null;
+  const back = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/');
+  };
+  return (
+    <div className="container pt-4">
+      <Button variant="ghost" size="sm" onClick={back} className="-ml-2">
+        <ArrowLeft className="h-4 w-4" /> Back
+      </Button>
+    </div>
+  );
+};
 
 export const Navbar = () => {
   const { user, profile, role, signOut } = useAuth();
@@ -139,6 +156,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <GlobalBackButton />
       <main className="flex-1">{children}</main>
       <Footer />
     </div>

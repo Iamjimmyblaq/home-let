@@ -97,16 +97,25 @@ const RolesPanel = () => {
 const UsersListDialog = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [people, setPeople] = useState<any[]>([]);
   const [q, setQ] = useState('');
-  useEffect(() => {
-    if (!open) return;
-    (async () => {
-      const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(500);
-      setPeople(data || []);
-    })();
-  }, [open]);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const load = async () => {
+    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(500);
+    setPeople(data || []);
+  };
+  useEffect(() => { if (open) load(); }, [open]);
   const filtered = people.filter((p) =>
-    !q.trim() ? true : (p.full_name || '' + p.username || '' + p.phone || '' + p.agency_name || '').toLowerCase().includes(q.toLowerCase())
+    !q.trim() ? true : ((p.full_name || '') + (p.username || '') + (p.phone || '') + (p.agency_name || '')).toLowerCase().includes(q.toLowerCase())
   );
+  const doAction = async (uid: string, action: 'suspend' | 'unsuspend' | 'delete', label: string) => {
+    if (action === 'delete' && !confirm('Permanently delete this user and every trace of their data? This cannot be undone.')) return;
+    if (action === 'suspend' && !confirm('Suspend this user? They will not be able to sign in until you unsuspend them.')) return;
+    setBusyId(uid);
+    const { data, error } = await supabase.functions.invoke('admin-user-action', { body: { action, target_user_id: uid } });
+    setBusyId(null);
+    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || 'Failed'); return; }
+    toast.success(label);
+    load();
+  };
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
@@ -114,9 +123,9 @@ const UsersListDialog = ({ open, onClose }: { open: boolean; onClose: () => void
         <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-3" />
         <div className="divide-y">
           {filtered.map((p) => (
-            <div key={p.id} className="flex items-center gap-3 py-2.5">
+            <div key={p.id} className="flex items-center gap-3 py-2.5 flex-wrap">
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">{(p.full_name || '?').charAt(0)}</div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-[180px]">
                 <div className="text-sm font-medium truncate flex items-center gap-1">
                   {p.full_name || 'Unnamed'}
                   {p.kyc_status === 'verified' && <ShieldCheck className="h-3.5 w-3.5 text-success" />}
@@ -125,6 +134,9 @@ const UsersListDialog = ({ open, onClose }: { open: boolean; onClose: () => void
                 <div className="text-xs text-muted-foreground truncate">{p.agency_name || '—'} · {p.phone || 'no phone'} · KYC {p.kyc_status}</div>
               </div>
               <Badge variant="outline" className="capitalize text-xs">{p.kyc_status}</Badge>
+              <Button size="sm" variant="outline" disabled={busyId === p.user_id} onClick={() => doAction(p.user_id, 'suspend', 'User suspended')}>Suspend</Button>
+              <Button size="sm" variant="ghost" disabled={busyId === p.user_id} onClick={() => doAction(p.user_id, 'unsuspend', 'User unsuspended')}>Unsuspend</Button>
+              <Button size="sm" variant="destructive" disabled={busyId === p.user_id} onClick={() => doAction(p.user_id, 'delete', 'User deleted')}>Delete</Button>
             </div>
           ))}
           {filtered.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">No matches.</div>}
@@ -246,7 +258,7 @@ const AdminDashboard = () => {
     return (
       <Layout>
         <div className="container py-10">
-          <BackButton to="/" label="Home" />
+          
           <h1 className="text-3xl font-bold mb-1">Moderator Console</h1>
           <p className="text-muted-foreground mb-8">Resolve open disputes between users and agents.</p>
           <StaffDisputesPanel />
@@ -277,7 +289,7 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
-        <BackButton to="/" label="Home" />
+        
         <h1 className="text-3xl font-bold mb-1">Admin Console</h1>
         <p className="text-muted-foreground mb-8">Platform-wide moderation, KYC and analytics.</p>
 

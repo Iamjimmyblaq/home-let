@@ -1,6 +1,6 @@
 import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
-import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, Edit, Rocket, Sparkles } from 'lucide-react';
+import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, Edit, Rocket, Sparkles, MessageSquare } from 'lucide-react';
 import { naira, shortNaira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -142,12 +142,13 @@ type ListingFormState = {
   location: string; city: string; state: string; latitude: string; longitude: string;
   description: string; amenities: string; tour: string;
   cert_type: string; cert_url: string;
+  nights_available: string;
 };
 
 const emptyForm: ListingFormState = {
   title: '', type: 'rent', price: '', bedrooms: '2', bathrooms: '2', area: '120',
   location: '', city: '', state: 'Lagos', latitude: '', longitude: '', description: '', amenities: '', tour: '',
-  cert_type: '', cert_url: '',
+  cert_type: '', cert_url: '', nights_available: '',
 };
 
 const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }: {
@@ -234,6 +235,15 @@ const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }
         <div><Label>Baths</Label><Input type="number" value={f.bathrooms} onChange={(e) => setF({ ...f, bathrooms: e.target.value })} /></div>
         <div><Label>Area (m²)</Label><Input type="number" value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })} /></div>
       </div>
+      {(f.type === 'shortlet' || f.type === 'hotel') && (
+        <div>
+          <Label>Nights available</Label>
+          <Input type="number" min={1} value={f.nights_available}
+            onChange={(e) => setF({ ...f, nights_available: e.target.value })}
+            placeholder="e.g. 30 (max nights guests can book)" />
+          <div className="text-xs text-muted-foreground mt-1">Guests will see this as the maximum number of nights they can book.</div>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3">
         <div><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required placeholder="Lekki Phase 1" /></div>
         <div><Label>City</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder="Lekki" /></div>
@@ -320,6 +330,7 @@ const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: 
       longitude: f.longitude ? Number(f.longitude) : null,
       cert_type: f.type === 'sale' && f.cert_type ? f.cert_type : null,
       cert_url: f.type === 'sale' && f.cert_url ? f.cert_url : null,
+      nights_available: (f.type === 'shortlet' || f.type === 'hotel') && f.nights_available ? Number(f.nights_available) : null,
       status: 'pending',
     } as any);
     setBusy(false);
@@ -365,6 +376,7 @@ const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved:
       latitude: d.latitude != null ? String(d.latitude) : '', longitude: d.longitude != null ? String(d.longitude) : '',
       description: d.description || '', amenities: (d.amenities || []).join(', '), tour: d.tour_url || '',
       cert_type: d.cert_type || '', cert_url: d.cert_url || '',
+      nights_available: d.nights_available != null ? String(d.nights_available) : '',
     });
     setImages(d.images || []);
   };
@@ -382,6 +394,7 @@ const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved:
       longitude: f.longitude ? Number(f.longitude) : null,
       cert_type: f.type === 'sale' && f.cert_type ? f.cert_type : null,
       cert_url: f.type === 'sale' && f.cert_url ? f.cert_url : null,
+      nights_available: (f.type === 'shortlet' || f.type === 'hotel') && f.nights_available ? Number(f.nights_available) : null,
     } as any).eq('id', listingId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -506,18 +519,21 @@ const AgentDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
-        <BackButton to="/" label="Home" />
+        
         <KYCBanner />
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold">Agent dashboard</h1>
             <p className="text-muted-foreground">Manage listings, inspections and earnings.</p>
           </div>
-          <NewListingDialog
-            onCreated={reload}
-            disabled={role === 'agent' && profile?.kyc_status !== 'verified'}
-            disabledReason="Complete KYC verification to create listings."
-          />
+          <div className="flex gap-2 flex-wrap">
+            <Link to="/chat"><Button size="lg" variant="outline"><MessageSquare className="h-4 w-4" /> Messages</Button></Link>
+            <NewListingDialog
+              onCreated={reload}
+              disabled={role === 'agent' && profile?.kyc_status !== 'verified'}
+              disabledReason="Complete KYC verification to create listings."
+            />
+          </div>
 
         </div>
 

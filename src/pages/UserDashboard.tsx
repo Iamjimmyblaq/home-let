@@ -1,7 +1,7 @@
 import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
 import { PropertyCard } from '@/components/PropertyCard';
-import { Calendar, CheckCircle2, Heart, Wallet, MessageSquare, Eye, ShieldCheck } from 'lucide-react';
+import { Calendar, CheckCircle2, Heart, Wallet, MessageSquare, Eye, ShieldCheck, Users, Trash2, Star } from 'lucide-react';
 import { naira } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,61 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useListings } from '@/hooks/useListings';
-import { BackButton } from '@/components/BackButton';
 import { RaiseDisputeButton } from '@/components/Disputes';
 import { toast } from 'sonner';
 
 type InspectionRow = { id: string; listing_id: string; mode: string; scheduled_at: string; status: string; agent_id: string; fee: number };
 type BookingRow = { id: string; listing_id: string | null; hotel_ref: string | null; check_in: string; check_out: string; status: string; total_amount: number };
+type AgentDir = { user_id: string; name: string; agency: string; avatar: string; verified: boolean; rating: number; listings: number };
+
+const useAgentsDirectory = () => {
+  const [items, setItems] = useState<AgentDir[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'agent');
+      const ids = (roles || []).map((r: any) => r.user_id);
+      if (!ids.length) return;
+      const [{ data: profs }, { data: lst }] = await Promise.all([
+        supabase.from('profiles').select('user_id, full_name, username, agency_name, avatar_url, kyc_status, agent_rating').in('user_id', ids),
+        supabase.from('listings').select('agent_id, status').in('agent_id', ids),
+      ]);
+      const counts: Record<string, number> = {};
+      (lst || []).forEach((l: any) => { if (l.status === 'verified') counts[l.agent_id] = (counts[l.agent_id] || 0) + 1; });
+      const rows: AgentDir[] = (profs || []).map((p: any) => ({
+        user_id: p.user_id,
+        name: p.full_name || p.username || 'Agent',
+        agency: p.agency_name || 'Independent',
+        avatar: p.avatar_url && /^https?:/.test(p.avatar_url) ? p.avatar_url : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
+        verified: p.kyc_status === 'verified',
+        rating: Number(p.agent_rating || 4.6),
+        listings: counts[p.user_id] || 0,
+      }));
+      rows.sort((a, b) => Number(b.verified) - Number(a.verified) || b.listings - a.listings);
+      setItems(rows);
+    })();
+  }, []);
+  return items;
+};
+
+const DeleteAccountButton = () => {
+  const { signOut } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const onDelete = async () => {
+    if (!confirm('This will permanently delete your account and every trace of your data. Continue?')) return;
+    if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('admin-user-action', { body: { action: 'delete_self' } });
+    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || 'Delete failed'); setBusy(false); return; }
+    toast.success('Account deleted. Goodbye.');
+    await signOut();
+    window.location.href = '/';
+  };
+  return (
+    <Button variant="destructive" size="sm" disabled={busy} onClick={onDelete}>
+      <Trash2 className="h-4 w-4" /> {busy ? 'Deleting…' : 'Delete my account'}
+    </Button>
+  );
+};
 
 const UserDashboard = () => {
   const { user, profile } = useAuth();
@@ -25,6 +74,7 @@ const UserDashboard = () => {
   const { items } = useListings();
   const [inspections, setInspections] = useState<InspectionRow[]>([]);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const agents = useAgentsDirectory();
 
   useEffect(() => {
     if (!user) return;
@@ -52,7 +102,7 @@ const UserDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
-        <BackButton to="/" label="Home" />
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || user?.email} 👋</h1>
           <p className="text-muted-foreground">Here's what's happening on your account.</p>
@@ -135,6 +185,42 @@ const UserDashboard = () => {
               No saved homes yet. <Link to="/listings" className="text-primary font-medium">Browse listings</Link>
             </div>
           )}
+        </div>
+
+        <div className="mt-10">
+          <div className="flex items-end justify-between mb-4">
+            <h2 className="font-bold text-xl flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Top agents & landlords</h2>
+            <Link to="/agents" className="text-sm text-primary hover:underline">See all →</Link>
+          </div>
+          {agents.length === 0 ? (
+            <div className="text-center text-muted-foreground py-10 border rounded-2xl border-dashed">No agents yet.</div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {agents.slice(0, 8).map((a) => (
+                <Link key={a.user_id} to={`/agent-profile/${a.user_id}`} className="bg-card border rounded-2xl p-4 shadow-soft hover:shadow-elegant transition-all flex items-center gap-3">
+                  <img src={a.avatar} alt={a.name} className="h-12 w-12 rounded-full object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-sm truncate flex items-center gap-1">{a.name}{a.verified && <ShieldCheck className="h-3.5 w-3.5 text-success shrink-0" />}</div>
+                    <div className="text-xs text-muted-foreground truncate">{a.agency}</div>
+                    <div className="flex items-center gap-2 text-xs mt-1 text-muted-foreground">
+                      <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-accent text-accent" />{a.rating.toFixed(1)}</span>
+                      <span>·</span><span>{a.listings} listing{a.listings === 1 ? '' : 's'}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 border-t pt-8">
+          <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="font-semibold text-sm">Danger zone</div>
+              <div className="text-xs text-muted-foreground">Permanently delete your account and every trace of your data from Home-let.</div>
+            </div>
+            <DeleteAccountButton />
+          </div>
         </div>
       </div>
     </Layout>

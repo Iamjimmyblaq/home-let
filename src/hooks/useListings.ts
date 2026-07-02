@@ -27,6 +27,7 @@ export type DbListing = {
   cert_type?: string | null;
   boost_status?: string | null;
   boost_until?: string | null;
+  nights_available?: number | null;
 };
 
 // Unified card-friendly type combining seeded mock data + real DB rows
@@ -61,6 +62,7 @@ export type UnifiedProperty = {
   boostUntil?: string | null;
   certUrl?: string | null;
   certType?: string | null;
+  nightsAvailable?: number | null;
 };
 
 const seedCoords: Record<string, { latitude: number; longitude: number }> = {
@@ -129,6 +131,7 @@ const dbToUnified = (l: DbListing, profileMap: Map<string, any>, gallery: string
     boostUntil: l.boost_until ?? null,
     certUrl: l.cert_url ?? null,
     certType: l.cert_type ?? null,
+    nightsAvailable: (l as any).nights_available ?? null,
   };
 };
 

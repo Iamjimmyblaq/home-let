@@ -289,6 +289,7 @@ export type Database = {
           latitude: number | null
           location: string
           longitude: number | null
+          nights_available: number | null
           price: number
           state: string | null
           status: string
@@ -320,6 +321,7 @@ export type Database = {
           latitude?: number | null
           location: string
           longitude?: number | null
+          nights_available?: number | null
           price: number
           state?: string | null
           status?: string
@@ -351,6 +353,7 @@ export type Database = {
           latitude?: number | null
           location?: string
           longitude?: number | null
+          nights_available?: number | null
           price?: number
           state?: string | null
           status?: string
