@@ -506,7 +506,7 @@ const AgentDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
-        <BackButton to="/" label="Home" />
+        
         <KYCBanner />
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
