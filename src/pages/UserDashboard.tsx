@@ -52,7 +52,7 @@ const UserDashboard = () => {
   return (
     <Layout>
       <div className="container py-10">
-        <BackButton to="/" label="Home" />
+        
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || user?.email} 👋</h1>
           <p className="text-muted-foreground">Here's what's happening on your account.</p>
