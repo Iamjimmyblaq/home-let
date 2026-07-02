@@ -62,6 +62,7 @@ export type UnifiedProperty = {
   boostUntil?: string | null;
   certUrl?: string | null;
   certType?: string | null;
+  nightsAvailable?: number | null;
 };
 
 const seedCoords: Record<string, { latitude: number; longitude: number }> = {
