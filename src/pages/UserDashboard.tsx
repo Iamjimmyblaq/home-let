@@ -74,6 +74,7 @@ const UserDashboard = () => {
   const { items } = useListings();
   const [inspections, setInspections] = useState<InspectionRow[]>([]);
   const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const agents = useAgentsDirectory();
 
   useEffect(() => {
     if (!user) return;
