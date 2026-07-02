@@ -131,6 +131,7 @@ const dbToUnified = (l: DbListing, profileMap: Map<string, any>, gallery: string
     boostUntil: l.boost_until ?? null,
     certUrl: l.cert_url ?? null,
     certType: l.cert_type ?? null,
+    nightsAvailable: (l as any).nights_available ?? null,
   };
 };
 
