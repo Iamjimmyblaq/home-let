@@ -235,6 +235,15 @@ const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }
         <div><Label>Baths</Label><Input type="number" value={f.bathrooms} onChange={(e) => setF({ ...f, bathrooms: e.target.value })} /></div>
         <div><Label>Area (m²)</Label><Input type="number" value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })} /></div>
       </div>
+      {(f.type === 'shortlet' || f.type === 'hotel') && (
+        <div>
+          <Label>Nights available</Label>
+          <Input type="number" min={1} value={f.nights_available}
+            onChange={(e) => setF({ ...f, nights_available: e.target.value })}
+            placeholder="e.g. 30 (max nights guests can book)" />
+          <div className="text-xs text-muted-foreground mt-1">Guests will see this as the maximum number of nights they can book.</div>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3">
         <div><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required placeholder="Lekki Phase 1" /></div>
         <div><Label>City</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} placeholder="Lekki" /></div>
