@@ -186,6 +186,42 @@ const UserDashboard = () => {
             </div>
           )}
         </div>
+
+        <div className="mt-10">
+          <div className="flex items-end justify-between mb-4">
+            <h2 className="font-bold text-xl flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Top agents & landlords</h2>
+            <Link to="/agents" className="text-sm text-primary hover:underline">See all →</Link>
+          </div>
+          {agents.length === 0 ? (
+            <div className="text-center text-muted-foreground py-10 border rounded-2xl border-dashed">No agents yet.</div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {agents.slice(0, 8).map((a) => (
+                <Link key={a.user_id} to={`/agent-profile/${a.user_id}`} className="bg-card border rounded-2xl p-4 shadow-soft hover:shadow-elegant transition-all flex items-center gap-3">
+                  <img src={a.avatar} alt={a.name} className="h-12 w-12 rounded-full object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-sm truncate flex items-center gap-1">{a.name}{a.verified && <ShieldCheck className="h-3.5 w-3.5 text-success shrink-0" />}</div>
+                    <div className="text-xs text-muted-foreground truncate">{a.agency}</div>
+                    <div className="flex items-center gap-2 text-xs mt-1 text-muted-foreground">
+                      <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-accent text-accent" />{a.rating.toFixed(1)}</span>
+                      <span>·</span><span>{a.listings} listing{a.listings === 1 ? '' : 's'}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 border-t pt-8">
+          <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="font-semibold text-sm">Danger zone</div>
+              <div className="text-xs text-muted-foreground">Permanently delete your account and every trace of your data from Home-let.</div>
+            </div>
+            <DeleteAccountButton />
+          </div>
+        </div>
       </div>
     </Layout>
   );
