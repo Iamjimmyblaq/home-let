@@ -526,11 +526,14 @@ const AgentDashboard = () => {
             <h1 className="text-3xl font-bold">Agent dashboard</h1>
             <p className="text-muted-foreground">Manage listings, inspections and earnings.</p>
           </div>
-          <NewListingDialog
-            onCreated={reload}
-            disabled={role === 'agent' && profile?.kyc_status !== 'verified'}
-            disabledReason="Complete KYC verification to create listings."
-          />
+          <div className="flex gap-2 flex-wrap">
+            <Link to="/chat"><Button size="lg" variant="outline"><MessageSquare className="h-4 w-4" /> Messages</Button></Link>
+            <NewListingDialog
+              onCreated={reload}
+              disabled={role === 'agent' && profile?.kyc_status !== 'verified'}
+              disabledReason="Complete KYC verification to create listings."
+            />
+          </div>
 
         </div>
 
