@@ -563,7 +563,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      agents_public: {
+        Row: {
+          agency_name: string | null
+          agent_rating: number | null
+          agent_reviews: number | null
+          avatar_url: string | null
+          bio: string | null
+          full_name: string | null
+          user_id: string | null
+          username: string | null
+          verified: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_boost: { Args: { _listing_id: string }; Returns: Json }
