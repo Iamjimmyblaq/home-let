@@ -14,9 +14,13 @@ const VirtualTour = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { item: p, loading } = useListing(id);
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { wallet, holdEscrow } = useWallet();
-  const [unlocked, setUnlocked] = useState(false);
+  const isOwner = !!user && !!p && p.agentId === user.id;
+  const isAdmin = role === 'admin' || role === 'moderator';
+  const freeAccess = isOwner || isAdmin;
+  const [unlockedState, setUnlocked] = useState(false);
+  const unlocked = unlockedState || freeAccess;
   const [room, setRoom] = useState(0);
 
   if (loading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
