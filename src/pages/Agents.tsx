@@ -35,31 +35,28 @@ const useAgentList = () => {
 
   useEffect(() => {
     (async () => {
-      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'agent');
-      const ids = (roles || []).map((r: any) => r.user_id);
-      let dbRows: AgentRow[] = [];
+      const { data: profs } = await (supabase as any).from('agents_public').select('*');
+      const ids = ((profs as any[]) || []).map((p) => p.user_id);
+      let counts: Record<string, number> = {};
       if (ids.length) {
-        const [{ data: profs }, { data: lst }] = await Promise.all([
-          supabase.from('profiles').select('*').in('user_id', ids),
-          supabase.from('listings').select('agent_id, status').in('agent_id', ids),
-        ]);
-        const counts: Record<string, number> = {};
+        const { data: lst } = await supabase.from('listings').select('agent_id, status').in('agent_id', ids);
         (lst || []).forEach((l: any) => { if (l.status === 'verified') counts[l.agent_id] = (counts[l.agent_id] || 0) + 1; });
-        dbRows = (profs || []).map((p: any) => ({
-          id: p.user_id,
-          user_id: p.user_id,
-          name: p.full_name || p.username || 'Agent',
-          username: p.username,
-          agency: p.agency_name || 'Independent',
-          avatar: p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
-          bio: p.bio || 'Verified Home-let agent.',
-          phone: p.phone || '',
-          verified: p.kyc_status === 'verified',
-          rating: Number(p.agent_rating || (p.kyc_status === 'verified' ? 4.8 : 4.0)),
-          reviews: Number(p.agent_reviews || counts[p.user_id] || 0),
-          listings: counts[p.user_id] || 0,
-        }));
       }
+      const dbRows: AgentRow[] = ((profs as any[]) || []).map((p: any) => ({
+        id: p.user_id,
+        user_id: p.user_id,
+        name: p.full_name || p.username || 'Agent',
+        username: p.username,
+        agency: p.agency_name || 'Independent',
+        avatar: p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
+        bio: p.bio || 'Verified Home-let agent.',
+        phone: '',
+        verified: !!p.verified,
+        rating: Number(p.agent_rating || (p.verified ? 4.8 : 4.0)),
+        reviews: Number(p.agent_reviews || counts[p.user_id] || 0),
+        listings: counts[p.user_id] || 0,
+      }));
+
       const merged = [...dbRows, ...seedAgents.map(fromSeed)];
       // sort by rating desc, then reviews desc
       merged.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews || b.listings - a.listings);

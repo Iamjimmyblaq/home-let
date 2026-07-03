@@ -22,21 +22,18 @@ const useAgentsDirectory = () => {
   const [items, setItems] = useState<AgentDir[]>([]);
   useEffect(() => {
     (async () => {
-      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'agent');
-      const ids = (roles || []).map((r: any) => r.user_id);
+      const { data: profs } = await (supabase as any).from('agents_public').select('*');
+      const ids = ((profs as any[]) || []).map((p) => p.user_id);
       if (!ids.length) return;
-      const [{ data: profs }, { data: lst }] = await Promise.all([
-        supabase.from('profiles').select('user_id, full_name, username, agency_name, avatar_url, kyc_status, agent_rating').in('user_id', ids),
-        supabase.from('listings').select('agent_id, status').in('agent_id', ids),
-      ]);
+      const { data: lst } = await supabase.from('listings').select('agent_id, status').in('agent_id', ids);
       const counts: Record<string, number> = {};
       (lst || []).forEach((l: any) => { if (l.status === 'verified') counts[l.agent_id] = (counts[l.agent_id] || 0) + 1; });
-      const rows: AgentDir[] = (profs || []).map((p: any) => ({
+      const rows: AgentDir[] = ((profs as any[]) || []).map((p: any) => ({
         user_id: p.user_id,
         name: p.full_name || p.username || 'Agent',
         agency: p.agency_name || 'Independent',
         avatar: p.avatar_url && /^https?:/.test(p.avatar_url) ? p.avatar_url : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
-        verified: p.kyc_status === 'verified',
+        verified: !!p.verified,
         rating: Number(p.agent_rating || 4.6),
         listings: counts[p.user_id] || 0,
       }));
@@ -44,6 +41,7 @@ const useAgentsDirectory = () => {
       setItems(rows);
     })();
   }, []);
+
   return items;
 };
 
