@@ -21,6 +21,7 @@ import Booking from "./pages/Booking";
 import UserDashboard from "./pages/UserDashboard";
 import AgentDashboard from "./pages/AgentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import AgentTerms from "./pages/AgentTerms";
 import { RoleRouter } from "./components/RoleRouter";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/agent-profile/:id" element={<AgentProfile />} />
             <Route path="/tour/:id" element={<VirtualTour />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/agent-terms" element={<AgentTerms />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/wallet" element={<ProtectedRoute roles={['user', 'agent', 'admin']}><Wallet /></ProtectedRoute>} />
