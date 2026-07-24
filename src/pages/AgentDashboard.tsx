@@ -513,6 +513,15 @@ const AgentDashboard = () => {
     toast.success('Listing removed');
   };
 
+  const toggleUnlist = async (id: string, current: string) => {
+    const next = current === 'unlisted' ? 'verified' : 'unlisted';
+    const { error } = await supabase.from('listings').update({ status: next } as any).eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next === 'unlisted' ? 'Listing hidden — you can relist any time' : 'Listing relisted');
+    reload();
+  };
+
+
   const titleOf = (lid: string) => listings.find((l) => l.id === lid)?.title || 'Property';
   const pending = inspections.filter((i) => i.status === 'pending').length;
 
@@ -579,6 +588,12 @@ const AgentDashboard = () => {
                   </div>
                   <EditListingDialog listingId={p.id} onSaved={reload} />
                   <BoostDialog listingId={p.id} title={p.title} walletBalance={wallet.available_balance} onSubmitted={reload} />
+                  {(p.type === 'shortlet' || p.type === 'hotel' || !p.verified) && (
+                    <Button size="sm" variant="outline" onClick={async () => {
+                      const { data } = await supabase.from('listings').select('status').eq('id', p.id).maybeSingle();
+                      toggleUnlist(p.id, (data as any)?.status || (p.verified ? 'verified' : 'pending'));
+                    }}>{p.verified ? 'Unlist' : 'Relist'}</Button>
+                  )}
                   <Button size="icon" variant="ghost" onClick={() => deleteListing(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               ))}

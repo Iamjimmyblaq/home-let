@@ -261,7 +261,7 @@ const AdminDashboard = () => {
           
           <h1 className="text-3xl font-bold mb-1">Moderator Console</h1>
           <p className="text-muted-foreground mb-8">Resolve open disputes between users and agents.</p>
-          <StaffDisputesPanel />
+          <StaffDisputesPanel role="moderator" />
         </div>
       </Layout>
     );
@@ -351,7 +351,7 @@ const AdminDashboard = () => {
           </TabsContent>
           <TabsContent value="boosts" className="mt-4"><BoostQueue onChange={load} /></TabsContent>
           <TabsContent value="featured" className="mt-4"><FeaturedPanel /></TabsContent>
-          <TabsContent value="disputes" className="mt-4"><StaffDisputesPanel /></TabsContent>
+          <TabsContent value="disputes" className="mt-4"><StaffDisputesPanel role="admin" /></TabsContent>
           <TabsContent value="roles" className="mt-4"><RolesPanel /></TabsContent>
           <TabsContent value="analytics" className="mt-4">
             <div className="bg-card border rounded-2xl p-6">

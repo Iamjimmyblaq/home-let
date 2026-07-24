@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 type Resolution = 'refund_user' | 'release_agent' | 'split';
+type Action = 'propose' | 'approve' | 'reject' | 'escalate' | 'override';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -23,33 +24,72 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
     const admin = createClient(supaUrl, serviceKey);
-
-    // Check staff role (admin OR moderator)
     const { data: roles } = await admin.from('user_roles').select('role').eq('user_id', user.id);
-    const isStaff = (roles || []).some((r: any) => r.role === 'admin' || r.role === 'moderator');
-    if (!isStaff) return json({ error: 'Forbidden' }, 403);
+    const roleSet = new Set((roles || []).map((r: any) => r.role));
+    const isAdmin = roleSet.has('admin');
+    const isModerator = roleSet.has('moderator');
+    if (!isAdmin && !isModerator) return json({ error: 'Forbidden' }, 403);
 
-    const { dispute_id, resolution, note } = await req.json() as { dispute_id: string; resolution: Resolution; note?: string };
-    if (!dispute_id || !['refund_user', 'release_agent', 'split'].includes(resolution)) {
-      return json({ error: 'Invalid input' }, 400);
-    }
+    const body = await req.json() as { action: Action; dispute_id: string; resolution?: Resolution; note?: string };
+    const { action, dispute_id, resolution, note } = body;
+    if (!dispute_id || !action) return json({ error: 'Invalid input' }, 400);
 
     const { data: dispute } = await admin.from('disputes').select('*').eq('id', dispute_id).maybeSingle();
     if (!dispute) return json({ error: 'Dispute not found' }, 404);
-    if (dispute.status !== 'open') return json({ error: 'Dispute already resolved' }, 400);
+    if (dispute.status === 'resolved') return json({ error: 'Dispute already resolved' }, 400);
 
-    const payerId = dispute.raised_by; // user who paid into escrow
+    // MODERATOR: propose or escalate
+    if (action === 'propose') {
+      if (!resolution || !['refund_user', 'release_agent', 'split'].includes(resolution)) return json({ error: 'Invalid resolution' }, 400);
+      await admin.from('disputes').update({
+        moderator_proposed_resolution: resolution,
+        moderator_proposed_note: note ?? null,
+        moderator_by: user.id,
+        moderator_at: new Date().toISOString(),
+        status: 'pending_admin',
+      }).eq('id', dispute_id);
+      await admin.from('notifications').insert({
+        user_id: dispute.raised_by, type: 'dispute',
+        title: 'Moderator proposed a decision', body: 'A moderator has proposed a resolution. Awaiting admin approval.',
+        link: '/dashboard',
+      });
+      return json({ ok: true });
+    }
+
+    if (action === 'escalate') {
+      if (!isModerator && !isAdmin) return json({ error: 'Forbidden' }, 403);
+      await admin.from('disputes').update({ escalated_to_admin: true, moderator_proposed_note: note ?? dispute.moderator_proposed_note }).eq('id', dispute_id);
+      return json({ ok: true });
+    }
+
+    // Only admin from here on
+    if (!isAdmin) return json({ error: 'Only admin can finalize' }, 403);
+
+    if (action === 'reject') {
+      // Admin rejects the moderator's proposal — clears it, keeps dispute open
+      await admin.from('disputes').update({
+        moderator_proposed_resolution: null,
+        moderator_proposed_note: null,
+        status: 'open',
+      }).eq('id', dispute_id);
+      return json({ ok: true });
+    }
+
+    // approve or override — admin picks final resolution
+    const finalResolution: Resolution | undefined =
+      action === 'override' ? resolution : (dispute.moderator_proposed_resolution as Resolution | undefined) || resolution;
+    if (!finalResolution || !['refund_user', 'release_agent', 'split'].includes(finalResolution)) return json({ error: 'No resolution set' }, 400);
+
+    const payerId = dispute.raised_by;
     const payeeId = dispute.against_user;
     const amount = Number(dispute.amount);
 
-    // Load payer wallet
     const { data: payer } = await admin.from('wallets').select('available_balance, escrow_balance').eq('user_id', payerId).maybeSingle();
-    if (!payer || Number(payer.escrow_balance) < amount) return json({ error: 'Insufficient escrow on payer wallet' }, 400);
+    if (!payer || Number(payer.escrow_balance) < amount) return json({ error: 'Insufficient escrow' }, 400);
 
-    const refundAmt = resolution === 'refund_user' ? amount : resolution === 'split' ? Math.floor(amount / 2) : 0;
+    const refundAmt = finalResolution === 'refund_user' ? amount : finalResolution === 'split' ? Math.floor(amount / 2) : 0;
     const releaseAmt = amount - refundAmt;
 
-    // Reduce escrow
     await admin.from('wallets').update({
       escrow_balance: Number(payer.escrow_balance) - amount,
       available_balance: Number(payer.available_balance) + refundAmt,
@@ -58,10 +98,9 @@ Deno.serve(async (req) => {
     if (refundAmt > 0) {
       await admin.from('transactions').insert({
         user_id: payerId, type: 'refund', amount: refundAmt,
-        description: `Dispute refund (${resolution})`, reference_id: dispute_id,
+        description: `Dispute refund (${finalResolution})`, reference_id: dispute_id,
       });
     }
-
     if (releaseAmt > 0) {
       const { data: payee } = await admin.from('wallets').select('available_balance').eq('user_id', payeeId).maybeSingle();
       if (payee) {
@@ -69,19 +108,20 @@ Deno.serve(async (req) => {
       }
       await admin.from('transactions').insert({
         user_id: payeeId, type: 'payout', amount: releaseAmt,
-        description: `Dispute release (${resolution})`, reference_id: dispute_id,
+        description: `Dispute release (${finalResolution})`, reference_id: dispute_id,
       });
     }
 
     await admin.from('disputes').update({
-      status: 'resolved', resolution, resolution_note: note ?? null,
+      status: 'resolved', resolution: finalResolution, resolution_note: note ?? dispute.moderator_proposed_note ?? null,
       resolved_by: user.id, resolved_at: new Date().toISOString(),
+      admin_approved: true,
     }).eq('id', dispute_id);
 
-    return json({ ok: true, refundAmt, releaseAmt });
+    return json({ ok: true, refundAmt, releaseAmt, resolution: finalResolution });
   } catch (e) {
-    console.error('edge-fn-error', e);
-    return json({ error: 'An internal error occurred. Please try again.' }, 500);
+    console.error('dispute-resolve error', e);
+    return json({ error: 'An internal error occurred.' }, 500);
   }
 });
 

@@ -6,6 +6,7 @@ import { naira } from '@/lib/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import logoUrl from '@/assets/logo.png';
+import { NotificationsBell } from '@/components/Notifications';
 
 const GlobalBackButton = () => {
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ export const Navbar = () => {
                   {naira(wallet.available_balance)}
                 </Link>
               )}
+              <NotificationsBell />
               <Link to={dashHref}>
                 <Button variant="outline" size="sm">
                   <UserIcon className="h-4 w-4" /> {displayName}
