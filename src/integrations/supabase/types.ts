@@ -52,10 +52,14 @@ export type Database = {
       }
       bookings: {
         Row: {
+          agent_confirmed_at: string | null
           agent_id: string | null
+          caution_fee: number
+          caution_status: string
           check_in: string
           check_out: string
           created_at: string
+          extra_fees_total: number
           guests: number
           hotel_ref: string | null
           id: string
@@ -65,10 +69,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agent_confirmed_at?: string | null
           agent_id?: string | null
+          caution_fee?: number
+          caution_status?: string
           check_in: string
           check_out: string
           created_at?: string
+          extra_fees_total?: number
           guests?: number
           hotel_ref?: string | null
           id?: string
@@ -78,10 +86,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agent_confirmed_at?: string | null
           agent_id?: string | null
+          caution_fee?: number
+          caution_status?: string
           check_in?: string
           check_out?: string
           created_at?: string
+          extra_fees_total?: number
           guests?: number
           hotel_ref?: string | null
           id?: string
@@ -138,14 +150,53 @@ export type Database = {
           },
         ]
       }
+      dispute_appeals: {
+        Row: {
+          admin_by: string | null
+          admin_note: string | null
+          agent_id: string
+          created_at: string
+          id: string
+          note: string
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          admin_by?: string | null
+          admin_note?: string | null
+          agent_id: string
+          created_at?: string
+          id?: string
+          note: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          admin_by?: string | null
+          admin_note?: string | null
+          agent_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
+          admin_approved: boolean
           against_user: string
           amount: number
           booking_id: string | null
           created_at: string
+          escalated_to_admin: boolean
           id: string
           inspection_id: string | null
+          moderator_at: string | null
+          moderator_by: string | null
+          moderator_proposed_note: string | null
+          moderator_proposed_resolution: string | null
           raised_by: string
           reason: string
           resolution: string | null
@@ -156,12 +207,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_approved?: boolean
           against_user: string
           amount: number
           booking_id?: string | null
           created_at?: string
+          escalated_to_admin?: boolean
           id?: string
           inspection_id?: string | null
+          moderator_at?: string | null
+          moderator_by?: string | null
+          moderator_proposed_note?: string | null
+          moderator_proposed_resolution?: string | null
           raised_by: string
           reason: string
           resolution?: string | null
@@ -172,12 +229,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_approved?: boolean
           against_user?: string
           amount?: number
           booking_id?: string | null
           created_at?: string
+          escalated_to_admin?: boolean
           id?: string
           inspection_id?: string | null
+          moderator_at?: string | null
+          moderator_by?: string | null
+          moderator_proposed_note?: string | null
+          moderator_proposed_resolution?: string | null
           raised_by?: string
           reason?: string
           resolution?: string | null
@@ -265,6 +328,41 @@ export type Database = {
           },
         ]
       }
+      listing_unavailability: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          listing_id: string
+          reason: string | null
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          listing_id: string
+          reason?: string | null
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          listing_id?: string
+          reason?: string | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_unavailability_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           agent_id: string
@@ -278,11 +376,13 @@ export type Database = {
           boost_status: string
           boost_until: string | null
           category: string | null
+          caution_fee: number
           cert_type: string | null
           cert_url: string | null
           city: string | null
           created_at: string
           description: string | null
+          extra_fees: Json
           featured: boolean
           id: string
           images: string[] | null
@@ -310,11 +410,13 @@ export type Database = {
           boost_status?: string
           boost_until?: string | null
           category?: string | null
+          caution_fee?: number
           cert_type?: string | null
           cert_url?: string | null
           city?: string | null
           created_at?: string
           description?: string | null
+          extra_fees?: Json
           featured?: boolean
           id?: string
           images?: string[] | null
@@ -342,11 +444,13 @@ export type Database = {
           boost_status?: string
           boost_until?: string | null
           category?: string | null
+          caution_fee?: number
           cert_type?: string | null
           cert_url?: string | null
           city?: string | null
           created_at?: string
           description?: string | null
+          extra_fees?: Json
           featured?: boolean
           id?: string
           images?: string[] | null
@@ -396,6 +500,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agency_name: string | null
@@ -404,11 +541,13 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          dispute_lien_until: string | null
           full_name: string | null
           id: string
           kyc_doc_url: string | null
           kyc_status: string
           phone: string | null
+          terms_accepted_at: string | null
           updated_at: string
           user_id: string
           username: string | null
@@ -420,11 +559,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          dispute_lien_until?: string | null
           full_name?: string | null
           id?: string
           kyc_doc_url?: string | null
           kyc_status?: string
           phone?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -436,11 +577,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          dispute_lien_until?: string | null
           full_name?: string | null
           id?: string
           kyc_doc_url?: string | null
           kyc_status?: string
           phone?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -584,6 +727,10 @@ export type Database = {
         Args: { _email: string; _preferred: string }
         Returns: string
       }
+      confirm_booking_checkout: {
+        Args: { _booking_id: string; _intact: boolean }
+        Returns: Json
+      }
       credit_paystack_wallet: {
         Args: { _amount: number; _reference: string; _user_id: string }
         Returns: Json
@@ -598,6 +745,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      notify: {
+        Args: {
+          _body: string
+          _link: string
+          _title: string
+          _type: string
+          _user: string
+        }
+        Returns: undefined
       }
       reject_boost: { Args: { _listing_id: string }; Returns: undefined }
     }
