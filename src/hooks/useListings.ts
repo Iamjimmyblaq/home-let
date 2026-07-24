@@ -28,7 +28,7 @@ export type DbListing = {
   boost_status?: string | null;
   boost_until?: string | null;
   nights_available?: number | null;
-  extra_fees?: { label: string; amount: number }[] | null;
+  extra_fees?: any;
   caution_fee?: number | null;
 };
 
