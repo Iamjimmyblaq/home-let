@@ -782,6 +782,8 @@ const AgentDashboard = () => {
             </div>
             <WithdrawPanel />
           </TabsContent>
+          <TabsContent value="bookings" className="mt-4"><BookingsPanel titleOf={titleOf} /></TabsContent>
+          <TabsContent value="availability" className="mt-4 bg-card border rounded-2xl p-6"><AvailabilityPanel listings={listings} /></TabsContent>
           <TabsContent value="disputes" className="mt-4 bg-card border rounded-2xl p-6"><MyDisputesList /></TabsContent>
           <TabsContent value="profile" className="mt-4"><AgentProfileForm /></TabsContent>
         </Tabs>
