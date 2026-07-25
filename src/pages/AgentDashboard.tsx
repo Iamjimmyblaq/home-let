@@ -392,6 +392,8 @@ const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved:
       description: d.description || '', amenities: (d.amenities || []).join(', '), tour: d.tour_url || '',
       cert_type: d.cert_type || '', cert_url: d.cert_url || '',
       nights_available: d.nights_available != null ? String(d.nights_available) : '',
+      extra_fees: Array.isArray(d.extra_fees) ? d.extra_fees : [],
+      caution_fee: d.caution_fee != null ? String(d.caution_fee) : '',
     });
     setImages(d.images || []);
   };
