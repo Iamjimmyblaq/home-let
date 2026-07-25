@@ -15,6 +15,8 @@ export type Profile = {
   bio: string | null;
   kyc_status: 'none' | 'pending' | 'verified' | 'rejected';
   kyc_doc_url: string | null;
+  dispute_lien_until?: string | null;
+  terms_accepted_at?: string | null;
 };
 
 export type RouteGuardDebug = {
