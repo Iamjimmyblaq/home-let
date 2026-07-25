@@ -285,6 +285,17 @@ const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }
         )}
       </div>
       <div><Label>360° tour URL (optional)</Label><Input value={f.tour} onChange={(e) => setF({ ...f, tour: e.target.value })} placeholder="Leave blank — virtual tour is auto-built from your photos" /></div>
+      <div className="border rounded-xl p-3 bg-secondary/30 space-y-2">
+        <div className="text-sm font-semibold">Additional charges (shown to users before payment)</div>
+        <ExtraFeesEditor value={f.extra_fees} onChange={(v) => setF({ ...f, extra_fees: v })} />
+      </div>
+      {(f.type === 'shortlet' || f.type === 'hotel' || f.type === 'rent') && (
+        <div>
+          <Label>Caution / damage deposit (₦, refundable)</Label>
+          <Input type="number" min={0} value={f.caution_fee} onChange={(e) => setF({ ...f, caution_fee: e.target.value })} placeholder="e.g. 20000" />
+          <div className="text-xs text-muted-foreground mt-1">Held in escrow at booking; refunded when you confirm the property is intact on checkout.</div>
+        </div>
+      )}
       {f.type === 'sale' && (
         <div className="border rounded-xl p-3 bg-secondary/30 space-y-2">
           <div className="text-sm font-semibold flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-success" /> Ownership certificate (optional, helps buyers trust your listing)</div>
