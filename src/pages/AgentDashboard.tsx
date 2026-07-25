@@ -680,6 +680,7 @@ const AgentDashboard = () => {
       <div className="container py-10">
         
         <KYCBanner />
+        <LienBanner />
         <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold">Agent dashboard</h1>
