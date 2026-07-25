@@ -713,9 +713,11 @@ const AgentDashboard = () => {
         </div>
 
         <Tabs defaultValue="listings">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="listings">My listings</TabsTrigger>
             <TabsTrigger value="inspections">Inspection requests</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="availability">Availability</TabsTrigger>
             <TabsTrigger value="earnings">Earnings & withdraw</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
