@@ -89,6 +89,7 @@ export const Register = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState<AppRole>('user');
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '', phone: '', agency: '' });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -96,6 +97,10 @@ export const Register = () => {
     const uname = form.username.trim();
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(uname)) {
       toast.error('Username must be 3-20 chars (letters, numbers, underscore).');
+      return;
+    }
+    if (role === 'agent' && !termsAccepted) {
+      toast.error('You must accept the Agent / Landlord Terms to continue.');
       return;
     }
     setBusy(true);
@@ -108,6 +113,7 @@ export const Register = () => {
         phone: form.phone,
         agency_name: role === 'agent' ? form.agency : null,
         role,
+        terms_accepted: role === 'agent' ? termsAccepted : false,
         email_redirect_to: `${window.location.origin}/`,
       },
     });
@@ -146,9 +152,19 @@ export const Register = () => {
             )}
             <div><Label>Password</Label><Input type="password" minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required /></div>
             {role === 'agent' && (
-              <div className="text-xs text-muted-foreground bg-secondary/50 p-3 rounded-lg flex gap-2">
-                <ShieldCheck className="h-4 w-4 text-success shrink-0" /> Agents complete KYC verification before listings go live.
-              </div>
+              <>
+                <div className="text-xs text-muted-foreground bg-secondary/50 p-3 rounded-lg flex gap-2">
+                  <ShieldCheck className="h-4 w-4 text-success shrink-0" /> Agents complete KYC verification before listings go live.
+                </div>
+                <label className="flex items-start gap-2 text-sm">
+                  <input type="checkbox" className="mt-1" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
+                  <span>
+                    I have read and agree to the{' '}
+                    <Link to="/agent-terms" target="_blank" className="text-primary underline">Agent / Landlord Terms</Link>{' '}
+                    (accurate listings, no off-platform payments, prompt unlisting, etc.).
+                  </span>
+                </label>
+              </>
             )}
             <Button type="submit" className="w-full" size="lg" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</Button>
           </form>
