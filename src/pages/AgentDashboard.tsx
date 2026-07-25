@@ -412,6 +412,8 @@ const EditListingDialog = ({ listingId, onSaved }: { listingId: string; onSaved:
       cert_type: f.type === 'sale' && f.cert_type ? f.cert_type : null,
       cert_url: f.type === 'sale' && f.cert_url ? f.cert_url : null,
       nights_available: (f.type === 'shortlet' || f.type === 'hotel') && f.nights_available ? Number(f.nights_available) : null,
+      extra_fees: f.extra_fees.filter((x) => x.label.trim() && Number(x.amount) > 0),
+      caution_fee: f.caution_fee ? Number(f.caution_fee) : 0,
     } as any).eq('id', listingId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
