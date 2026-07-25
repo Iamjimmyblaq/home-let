@@ -144,12 +144,15 @@ type ListingFormState = {
   description: string; amenities: string; tour: string;
   cert_type: string; cert_url: string;
   nights_available: string;
+  extra_fees: ExtraFee[];
+  caution_fee: string;
 };
 
 const emptyForm: ListingFormState = {
   title: '', type: 'rent', price: '', bedrooms: '2', bathrooms: '2', area: '120',
   location: '', city: '', state: 'Lagos', latitude: '', longitude: '', description: '', amenities: '', tour: '',
   cert_type: '', cert_url: '', nights_available: '',
+  extra_fees: [], caution_fee: '',
 };
 
 const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }: {
