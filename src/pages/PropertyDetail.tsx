@@ -173,6 +173,17 @@ const PropertyDetail = () => {
               {p.type === 'shortlet' && (p as any).nightsAvailable ? (
                 <div className="text-xs text-muted-foreground mb-3">Up to {(p as any).nightsAvailable} nights available</div>
               ) : <div className="mb-3" />}
+              {(p.extraFees?.length || (p.cautionFee || 0) > 0) && (
+                <div className="border-t pt-3 mb-3 space-y-1 text-sm">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Additional charges</div>
+                  {p.extraFees?.map((ef, i) => (
+                    <div key={i} className="flex justify-between"><span className="text-muted-foreground">{ef.label}</span><span>{naira(Number(ef.amount || 0))}</span></div>
+                  ))}
+                  {(p.cautionFee || 0) > 0 && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Caution deposit (refundable)</span><span>{naira(p.cautionFee!)}</span></div>
+                  )}
+                </div>
+              )}
               <Button onClick={() => navigate(`/inspection/${p.id}`)} className="w-full mb-2" size="lg">
                 <Calendar className="h-4 w-4" /> Book inspection
               </Button>
