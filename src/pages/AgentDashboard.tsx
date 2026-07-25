@@ -490,7 +490,136 @@ const BoostDialog = ({ listingId, title, walletBalance, onSubmitted }: { listing
 };
 
 
+const LienBanner = () => {
+  const { profile } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const until = profile?.dispute_lien_until ? new Date(profile.dispute_lien_until) : null;
+  if (!until || until.getTime() < Date.now()) return null;
+  const submit = async () => {
+    if (note.trim().length < 20) { toast.error('Explain in at least 20 characters.'); return; }
+    setBusy(true);
+    const { error } = await supabase.from('dispute_appeals').insert({ agent_id: profile!.user_id, note: note.trim() } as any);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Appeal submitted — admin will review.');
+    setOpen(false); setNote('');
+  };
+  return (
+    <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div className="font-semibold text-sm text-destructive">Account on dispute lien until {until.toLocaleDateString()}</div>
+        <div className="text-xs text-muted-foreground">You cannot create new listings or withdraw funds while the lien is active. You may appeal for admin review.</div>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild><Button size="sm" variant="outline">Appeal lien</Button></DialogTrigger>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Appeal dispute lien</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">Explain what happened and why the lien should be lifted. Admin will review.</div>
+            <Textarea rows={5} value={note} onChange={(e) => setNote(e.target.value)} placeholder="I've resolved the underlying issues by…" />
+            <DialogFooter><Button onClick={submit} disabled={busy}>{busy ? 'Submitting…' : 'Send appeal'}</Button></DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
 
+const AvailabilityPanel = ({ listings }: { listings: UnifiedProperty[] }) => {
+  const stayable = listings.filter((l) => l.type === 'shortlet' || l.type === 'hotel');
+  const [lid, setLid] = useState(stayable[0]?.id || '');
+  const [rows, setRows] = useState<{ id: string; start_date: string; end_date: string; reason: string | null }[]>([]);
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (!lid && stayable[0]) setLid(stayable[0].id); }, [stayable, lid]);
+  const load = async () => {
+    if (!lid) { setRows([]); return; }
+    const { data } = await supabase.from('listing_unavailability').select('*').eq('listing_id', lid).order('start_date');
+    setRows((data as any) || []);
+  };
+  useEffect(() => { load(); }, [lid]);
+  const add = async () => {
+    if (!lid || !start || !end) { toast.error('Pick a listing and date range'); return; }
+    setBusy(true);
+    const { error } = await supabase.from('listing_unavailability').insert({ listing_id: lid, start_date: start, end_date: end, reason: reason || null } as any);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setStart(''); setEnd(''); setReason('');
+    load();
+  };
+  const remove = async (id: string) => { await supabase.from('listing_unavailability').delete().eq('id', id); load(); };
+  if (!stayable.length) return <div className="p-8 text-center text-muted-foreground">Add a short-let or hotel listing first.</div>;
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>Listing</Label>
+        <Select value={lid} onValueChange={setLid}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{stayable.map((l) => <SelectItem key={l.id} value={l.id}>{l.title}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end">
+        <div><Label>Start</Label><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></div>
+        <div><Label>End</Label><Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+        <div><Label>Reason (optional)</Label><Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Owner use / booked externally" /></div>
+        <Button onClick={add} disabled={busy}>Block</Button>
+      </div>
+      <div className="border rounded-xl overflow-hidden">
+        {rows.length === 0 && <div className="p-6 text-sm text-muted-foreground text-center">No blocked dates yet.</div>}
+        {rows.map((r) => (
+          <div key={r.id} className="flex items-center justify-between px-4 py-2 border-b last:border-0 text-sm">
+            <div>{r.start_date} → {r.end_date} {r.reason ? <span className="text-xs text-muted-foreground">· {r.reason}</span> : null}</div>
+            <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const BookingsPanel = ({ titleOf }: { titleOf: (id: string) => string }) => {
+  const { user } = useAuth();
+  const [rows, setRows] = useState<any[]>([]);
+  const load = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('bookings').select('*').eq('agent_id', user.id).order('created_at', { ascending: false });
+    setRows((data as any) || []);
+  };
+  useEffect(() => { load(); }, [user]);
+  const confirm = async (id: string, intact: boolean) => {
+    const { error } = await (supabase as any).rpc('confirm_booking_checkout', { _booking_id: id, _intact: intact });
+    if (error) { toast.error(error.message); return; }
+    toast.success(intact ? 'Caution refunded to guest' : 'Caution forfeited to you');
+    load();
+  };
+  return (
+    <div className="bg-card border rounded-2xl overflow-hidden">
+      {rows.length === 0 && <div className="p-8 text-center text-muted-foreground">No bookings yet.</div>}
+      {rows.map((b) => (
+        <div key={b.id} className="flex flex-wrap items-center gap-3 p-4 border-b last:border-0">
+          <div className="flex-1 min-w-[220px]">
+            <div className="font-medium text-sm">{b.listing_id ? titleOf(b.listing_id) : b.hotel_ref || 'Booking'}</div>
+            <div className="text-xs text-muted-foreground">{b.check_in} → {b.check_out} · {b.guests} guest(s) · {naira(Number(b.total_amount))}</div>
+            {Number(b.caution_fee) > 0 && (
+              <div className="text-xs text-muted-foreground">Caution: {naira(Number(b.caution_fee))} · <span className="capitalize">{b.caution_status}</span></div>
+            )}
+          </div>
+          <Badge variant="secondary" className="capitalize">{b.status}</Badge>
+          {b.caution_status === 'held' && (
+            <>
+              <Button size="sm" onClick={() => confirm(b.id, true)}>Confirm intact — refund caution</Button>
+              <Button size="sm" variant="outline" onClick={() => { if (confirm as any) { if (window.confirm('Report damages and forfeit the caution to you? The guest can dispute.')) confirm(b.id, false); } }}>Report damages</Button>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const AgentDashboard = () => {
   const { user, role, profile, loading: authLoading } = useAuth();
