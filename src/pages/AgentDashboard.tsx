@@ -20,6 +20,7 @@ import { BackButton } from '@/components/BackButton';
 import { WithdrawPanel } from '@/components/WithdrawPanel';
 import { RaiseDisputeButton, MyDisputesList } from '@/components/Disputes';
 import { NIGERIAN_STATES } from '@/data/nigerianStates';
+import { ExtraFeesEditor, ExtraFee } from '@/components/ExtraFeesEditor';
 
 const BOOST_BASE_FEE = 2500; // ₦2,500 for 2 days
 const BOOST_BASE_DAYS = 2;
