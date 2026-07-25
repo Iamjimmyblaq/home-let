@@ -54,12 +54,14 @@ Deno.serve(async (req) => {
     if (error) return json({ error: error.message }, 400);
     if (!data.user?.id) return json({ error: 'Could not create account.' }, 400);
 
+    const termsAccepted = role === 'agent' && !!body.terms_accepted;
     await admin.from('profiles').upsert({
       user_id: data.user.id,
       full_name: fullName,
       username,
       phone,
       agency_name: agencyName,
+      terms_accepted_at: termsAccepted ? new Date().toISOString() : null,
     }, { onConflict: 'user_id' });
     if (role === 'admin') {
       await admin.from('user_roles').delete().eq('user_id', data.user.id).neq('role', 'admin');
