@@ -95,7 +95,10 @@ const RolesPanel = () => {
             </div>
           );
         })}
-        {people.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">No profiles found.</div>}
+        {err && <div className="py-6 text-center text-sm text-destructive">Couldn't load profiles: {err}</div>}
+        {!err && loading && <div className="py-6 text-center text-sm text-muted-foreground">Loading team & roles…</div>}
+        {!err && !loading && people.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">No profiles found.</div>}
+
       </div>
     </div>
   );
