@@ -112,9 +112,56 @@ export const Navbar = () => {
   );
 };
 
+const POPULAR = {
+  'For sale': [
+    ['Flats & apartments for sale', '/listings?type=sale&q=flat'],
+    ['Houses for sale', '/listings?type=sale&q=house'],
+    ['Land for sale', '/listings?type=sale&q=land'],
+    ['Luxury properties for sale', '/listings?type=sale&q=luxury'],
+    ['Commercial property for sale', '/listings?type=sale&q=commercial'],
+  ],
+  'For rent': [
+    ['Flats & apartments for rent', '/listings?type=rent&q=flat'],
+    ['Self contain for rent', '/listings?type=rent&q=self contain'],
+    ['Houses for rent', '/listings?type=rent&q=house'],
+    ['Serviced apartments', '/listings?type=rent&q=serviced'],
+    ['Office space for rent', '/listings?type=rent&q=office'],
+  ],
+  'Short-let & hotels': [
+    ['Short lets in Lagos', '/listings?type=shortlet&q=Lagos'],
+    ['Short lets in Abuja', '/listings?type=shortlet&q=Abuja'],
+    ['Short lets in Lekki', '/listings?type=shortlet&q=Lekki'],
+    ['Short lets in Port Harcourt', '/listings?type=shortlet&q=Port Harcourt'],
+    ['Hotels in Nigeria', '/hotels'],
+  ],
+  'Popular locations': [
+    ['Property in Lagos', '/listings?q=Lagos'],
+    ['Property in Abuja', '/listings?q=Abuja'],
+    ['Property in Ikoyi', '/listings?q=Ikoyi'],
+    ['Property in Lekki', '/listings?q=Lekki'],
+    ['Property in Port Harcourt', '/listings?q=Port Harcourt'],
+  ],
+};
+
 export const Footer = () => (
   <footer className="border-t bg-secondary/40 mt-20">
-    <div className="container py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div className="container py-12 border-b">
+      <h3 className="font-semibold mb-6 text-sm uppercase tracking-wide text-muted-foreground">Popular searches</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {Object.entries(POPULAR).map(([group, links]) => (
+          <div key={group}>
+            <h4 className="font-semibold mb-3 text-sm">{group}</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {links.map(([label, href]) => (
+                <li key={label}><Link to={href} className="hover:text-foreground transition-colors">{label}</Link></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="container py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
       <div className="col-span-2 md:col-span-1">
         <div className="flex items-center gap-2 font-bold text-lg mb-3">
           <img src={logoUrl} alt="Home-let logo" className="h-9 w-9 rounded-lg object-contain bg-white p-0.5" />
@@ -125,17 +172,29 @@ export const Footer = () => (
       <div>
         <h4 className="font-semibold mb-3 text-sm">Explore</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li><Link to="/listings">Buy</Link></li>
-          <li><Link to="/listings">Rent</Link></li>
-          <li><Link to="/hotels">Short-let</Link></li>
+          <li><Link to="/listings?type=sale">Buy</Link></li>
+          <li><Link to="/listings?type=rent">Rent</Link></li>
+          <li><Link to="/listings?type=shortlet">Short-let</Link></li>
+          <li><Link to="/hotels">Hotels</Link></li>
           <li><Link to="/agents">Agents</Link></li>
         </ul>
       </div>
       <div>
         <h4 className="font-semibold mb-3 text-sm">Company</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li><Link to="/contact">Contact</Link></li>
-          <li><Link to="/contact">Support</Link></li>
+          <li><Link to="/about">About us</Link></li>
+          <li><Link to="/contact">Contact us</Link></li>
+          <li><Link to="/faq">Help & FAQ</Link></li>
+          <li><Link to="/register">List your property</Link></li>
+        </ul>
+      </div>
+      <div>
+        <h4 className="font-semibold mb-3 text-sm">Legal</h4>
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          <li><Link to="/terms">Terms and conditions</Link></li>
+          <li><Link to="/privacy">Privacy policy</Link></li>
+          <li><Link to="/agent-terms">Agent & landlord terms</Link></li>
+          <li><Link to="/faq">Safety tips</Link></li>
         </ul>
       </div>
       <div>
@@ -150,6 +209,7 @@ export const Footer = () => (
     <div className="border-t py-4 text-center text-xs text-muted-foreground">© 2026 Home-let. All rights reserved.</div>
   </footer>
 );
+
 
 import { useBeepNotifications } from '@/hooks/useBeepNotifications';
 
