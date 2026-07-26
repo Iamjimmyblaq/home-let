@@ -35,11 +35,16 @@ const RolesPanel = () => {
   const [q, setQ] = useState('');
   const [people, setPeople] = useState<any[]>([]);
   const [roles, setRoles] = useState<Record<string, string[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
   const load = async () => {
+    setLoading(true);
+    setErr(null);
     let query = supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(50);
-    if (q.trim()) query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,agency_name.ilike.%${q}%`);
-    const { data } = await query;
+    if (q.trim()) query = query.or(`full_name.ilike.%${q}%,username.ilike.%${q}%,agency_name.ilike.%${q}%`);
+    const { data, error } = await query;
+    if (error) { setErr(error.message); setPeople([]); setRoles({}); setLoading(false); return; }
     setPeople(data || []);
     const ids = (data || []).map((p) => p.user_id);
     if (ids.length) {
@@ -48,8 +53,10 @@ const RolesPanel = () => {
       (rs || []).forEach((r: any) => { (map[r.user_id] ||= []).push(r.role); });
       setRoles(map);
     } else setRoles({});
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
 
   const setRole = async (uid: string, role: 'user' | 'agent' | 'admin' | 'moderator') => {
     await supabase.from('user_roles').delete().eq('user_id', uid);
