@@ -22,6 +22,11 @@ import UserDashboard from "./pages/UserDashboard";
 import AgentDashboard from "./pages/AgentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AgentTerms from "./pages/AgentTerms";
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Faq from "./pages/Faq";
+
 import { RoleRouter } from "./components/RoleRouter";
 
 const queryClient = new QueryClient();
