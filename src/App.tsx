@@ -49,6 +49,11 @@ const App = () => (
             <Route path="/tour/:id" element={<VirtualTour />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/agent-terms" element={<AgentTerms />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/faq" element={<Faq />} />
+
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/wallet" element={<ProtectedRoute roles={['user', 'agent', 'admin']}><Wallet /></ProtectedRoute>} />
