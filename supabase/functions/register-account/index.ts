@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     const fullName = clean(body.full_name) || email.split('@')[0];
     const username = normalizeUsername(clean(body.username));
     const requestedRole = clean(body.role).toLowerCase();
-    const role = email === 'odamajames65@gmail.com' ? 'admin' : requestedRole === 'agent' || requestedRole === 'landlord' ? 'agent' : 'user';
+    const role = isSuperAdmin(email) ? 'admin' : requestedRole === 'agent' || requestedRole === 'landlord' ? 'agent' : 'user';
     const phone = clean(body.phone) || null;
     const agencyName = role === 'agent' ? clean(body.agency_name) || null : null;
     const redirectTo = clean(body.email_redirect_to);
