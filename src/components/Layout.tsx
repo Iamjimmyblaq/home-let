@@ -94,7 +94,10 @@ export const Navbar = () => {
             <NavLink to="/listings" className={linkCls} onClick={() => setOpen(false)}>Buy / Rent</NavLink>
             <NavLink to="/hotels" className={linkCls} onClick={() => setOpen(false)}>Hotels & Short-let</NavLink>
             <NavLink to="/agents" className={linkCls} onClick={() => setOpen(false)}>Agents</NavLink>
+            <NavLink to="/about" className={linkCls} onClick={() => setOpen(false)}>About</NavLink>
             <NavLink to="/contact" className={linkCls} onClick={() => setOpen(false)}>Contact</NavLink>
+            <NavLink to="/faq" className={linkCls} onClick={() => setOpen(false)}>Help & FAQ</NavLink>
+
             {user ? (
               <>
                 {role !== 'moderator' && <Link to="/wallet" onClick={() => setOpen(false)}><Button variant="outline" className="w-full">Wallet · {naira(wallet.available_balance)}</Button></Link>}
