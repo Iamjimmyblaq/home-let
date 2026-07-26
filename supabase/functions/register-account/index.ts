@@ -8,6 +8,9 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+const SUPER_ADMIN_EMAILS = ['home-let@zohomail.com', 'odamajames65@gmail.com'];
+const isSuperAdmin = (email: string) => SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
+
 const clean = (value: unknown) => String(value || '').trim();
 const normalizeUsername = (value: string) => {
   const cleaned = value.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
