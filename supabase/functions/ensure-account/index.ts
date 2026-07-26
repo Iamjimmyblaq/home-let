@@ -8,6 +8,9 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+const SUPER_ADMIN_EMAILS = ['home-let@zohomail.com', 'odamajames65@gmail.com'];
+const isSuperAdmin = (email: string) => SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
+
 const normalizeUsername = (value: string) => {
   const cleaned = value.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
   return cleaned.length >= 3 ? cleaned : `user_${crypto.randomUUID().replaceAll('-', '').slice(0, 8)}`;
@@ -31,7 +34,7 @@ Deno.serve(async (req) => {
     const meta = user.user_metadata || {};
     const email = String(user.email || '').toLowerCase();
     const requested = String(meta.role || '').toLowerCase();
-    const chosenRole = email === 'odamajames65@gmail.com' ? 'admin' : requested === 'agent' || requested === 'landlord' ? 'agent' : 'user';
+    const chosenRole = isSuperAdmin(email) ? 'admin' : requested === 'agent' || requested === 'landlord' ? 'agent' : 'user';
     const fullName = String(meta.full_name || user.email?.split('@')[0] || 'User').trim();
     const phone = meta.phone ? String(meta.phone).trim() : null;
     const agency = meta.agency_name ? String(meta.agency_name).trim() : null;

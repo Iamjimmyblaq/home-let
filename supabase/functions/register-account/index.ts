@@ -8,6 +8,9 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+const SUPER_ADMIN_EMAILS = ['home-let@zohomail.com', 'odamajames65@gmail.com'];
+const isSuperAdmin = (email: string) => SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
+
 const clean = (value: unknown) => String(value || '').trim();
 const normalizeUsername = (value: string) => {
   const cleaned = value.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
@@ -25,7 +28,7 @@ Deno.serve(async (req) => {
     const fullName = clean(body.full_name) || email.split('@')[0];
     const username = normalizeUsername(clean(body.username));
     const requestedRole = clean(body.role).toLowerCase();
-    const role = email === 'odamajames65@gmail.com' ? 'admin' : requestedRole === 'agent' || requestedRole === 'landlord' ? 'agent' : 'user';
+    const role = isSuperAdmin(email) ? 'admin' : requestedRole === 'agent' || requestedRole === 'landlord' ? 'agent' : 'user';
     const phone = clean(body.phone) || null;
     const agencyName = role === 'agent' ? clean(body.agency_name) || null : null;
     const redirectTo = clean(body.email_redirect_to);
