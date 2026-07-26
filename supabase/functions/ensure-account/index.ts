@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const meta = user.user_metadata || {};
     const email = String(user.email || '').toLowerCase();
     const requested = String(meta.role || '').toLowerCase();
-    const chosenRole = email === 'odamajames65@gmail.com' ? 'admin' : requested === 'agent' || requested === 'landlord' ? 'agent' : 'user';
+    const chosenRole = isSuperAdmin(email) ? 'admin' : requested === 'agent' || requested === 'landlord' ? 'agent' : 'user';
     const fullName = String(meta.full_name || user.email?.split('@')[0] || 'User').trim();
     const phone = meta.phone ? String(meta.phone).trim() : null;
     const agency = meta.agency_name ? String(meta.agency_name).trim() : null;
