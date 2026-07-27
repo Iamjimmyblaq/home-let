@@ -253,7 +253,13 @@ const AdminDashboard = () => {
       supabase.from('wallets').select('escrow_balance'),
       supabase.from('listings').select('*', { count: 'exact', head: true }).eq('boost_status', 'pending'),
     ]);
-    setAgents((a as any) || []);
+    const pendingIds = ((a as any[]) || []).map((p) => p.user_id);
+    let privMap = new Map<string, any>();
+    if (pendingIds.length) {
+      const { data: priv } = await supabase.from('profiles_private').select('user_id, phone, kyc_doc_url').in('user_id', pendingIds);
+      (priv || []).forEach((r: any) => privMap.set(r.user_id, r));
+    }
+    setAgents((((a as any[]) || []).map((p) => ({ ...p, ...(privMap.get(p.user_id) || {}) }))) as any);
     setListings((l as any) || []);
     setStats({
       users: uCount || 0,

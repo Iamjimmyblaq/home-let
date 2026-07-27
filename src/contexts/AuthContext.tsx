@@ -81,13 +81,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ?? (rs.includes('admin') ? 'admin' : rs.includes('moderator') ? 'moderator' : rs.includes('agent') ? 'agent' : 'user');
     setRole(resolved);
 
-    const { data: prof, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', uid)
-      .maybeSingle();
+    const [{ data: prof, error: profileError }, { data: priv }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle(),
+      supabase.from('profiles_private').select('phone, kyc_doc_url').eq('user_id', uid).maybeSingle(),
+    ]);
     if (profileError) console.warn('profile lookup failed', profileError);
-    setProfile((prof as Profile) ?? null);
+    setProfile(prof ? ({ ...prof, phone: priv?.phone ?? null, kyc_doc_url: priv?.kyc_doc_url ?? null } as Profile) : null);
     setRoleReady(true);
   }, [ensureAccount]);
 
