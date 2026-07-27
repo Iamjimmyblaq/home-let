@@ -44,7 +44,8 @@ const KYCBanner = () => {
     const path = `${user.id}/${Date.now()}-${file.name}`;
     const { error: upErr } = await supabase.storage.from('kyc-docs').upload(path, file, { upsert: true });
     if (upErr) { toast.error(upErr.message); setBusy(false); return; }
-    await supabase.from('profiles').update({ kyc_status: 'pending', kyc_doc_url: path }).eq('user_id', user.id);
+    await supabase.from('profiles_private').upsert({ user_id: user.id, kyc_doc_url: path }, { onConflict: 'user_id' });
+    await supabase.from('profiles').update({ kyc_status: 'pending' }).eq('user_id', user.id);
     await refresh();
     setBusy(false);
     toast.success('KYC submitted — admin will review shortly.');
