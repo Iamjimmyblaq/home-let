@@ -158,10 +158,11 @@ const emptyForm: ListingFormState = {
   extra_fees: [], caution_fee: '',
 };
 
-const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }: {
+const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId, onHash }: {
   f: ListingFormState; setF: (u: ListingFormState) => void;
   images: string[]; setImages: (u: string[] | ((p: string[]) => string[])) => void;
   busy: boolean; setBusy: (b: boolean) => void; userId: string;
+  onHash?: (path: string, phash: string) => void;
 }) => {
   const [geocoding, setGeocoding] = useState(false);
 
@@ -175,6 +176,7 @@ const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }
       const { error } = await supabase.storage.from('property-photos').upload(path, file, { contentType: file.type, upsert: false });
       if (error) { toast.error(`${file.name}: ${error.message}`); continue; }
       uploaded.push(path);
+      try { onHash?.(path, await computeImageHash(file)); } catch { /* hashing is best-effort */ }
     }
     setImages((prev) => [...prev, ...uploaded]);
     setBusy(false);
@@ -326,19 +328,48 @@ const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId }
   );
 };
 
+type ScreenReason = { level: 'block' | 'flag'; message: string; image?: string };
+
 const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: () => void; disabled?: boolean; disabledReason?: string }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [screening, setScreening] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [hashes, setHashes] = useState<Record<string, string>>({});
+  const [reasons, setReasons] = useState<ScreenReason[]>([]);
   const [f, setF] = useState<ListingFormState>(emptyForm);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (images.length === 0) { toast.error('Upload at least one photo'); return; }
+
+    // --- AI + duplicate photo screening before the listing is created ---
+    setScreening(true);
+    setReasons([]);
+    let flags: ScreenReason[] = [];
+    try {
+      const { data, error } = await supabase.functions.invoke('screen-listing-images', {
+        body: { images: images.map((p) => ({ path: p, phash: hashes[p] || '' })) },
+      });
+      if (error) throw error;
+      flags = (data?.reasons ?? []) as ScreenReason[];
+      setReasons(flags);
+      if (data?.verdict === 'block') {
+        setScreening(false);
+        toast.error('Submission blocked — one or more photos are already used on Home-Let.');
+        return;
+      }
+    } catch (err: any) {
+      console.warn('image screening failed', err);
+      flags = [{ level: 'flag', message: 'Automatic photo screening could not run — flagged for manual admin review.' }];
+      setReasons(flags);
+    }
+    setScreening(false);
+
     setBusy(true);
-    const { error } = await supabase.from('listings').insert({
+    const { data: created, error } = await supabase.from('listings').insert({
       agent_id: user.id, title: f.title, type: f.type as any, price: Number(f.price),
       bedrooms: +f.bedrooms, bathrooms: +f.bathrooms, area_sqm: +f.area,
       location: f.location, city: f.city, state: f.state, description: f.description,
@@ -351,12 +382,19 @@ const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: 
       nights_available: (f.type === 'shortlet' || f.type === 'hotel') && f.nights_available ? Number(f.nights_available) : null,
       extra_fees: f.extra_fees.filter((x) => x.label.trim() && Number(x.amount) > 0),
       caution_fee: f.caution_fee ? Number(f.caution_fee) : 0,
+      fraud_flags: flags,
       status: 'pending',
-    } as any);
+    } as any).select('id').maybeSingle();
+    if (!error && created?.id) {
+      const rows = images.filter((p) => hashes[p]).map((p) => ({ agent_id: user.id, listing_id: created.id, image_path: p, phash: hashes[p] }));
+      if (rows.length) await supabase.from('listing_image_fingerprints').insert(rows as any);
+    }
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success('Listing submitted — pending admin verification.');
-    setImages([]); setF(emptyForm);
+    toast.success(flags.length
+      ? 'Listing submitted with warnings — admins will review the photos.'
+      : 'Listing submitted — pending admin verification.');
+    setImages([]); setHashes({}); setReasons([]); setF(emptyForm);
     setOpen(false); onCreated();
   };
   if (!user) return null;
@@ -370,8 +408,25 @@ const NewListingDialog = ({ onCreated, disabled, disabledReason }: { onCreated: 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Create a new listing</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          <ListingFormFields f={f} setF={setF} images={images} setImages={setImages} busy={busy} setBusy={setBusy} userId={user.id} />
-          <DialogFooter><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Submit for review'}</Button></DialogFooter>
+          <ListingFormFields f={f} setF={setF} images={images} setImages={setImages} busy={busy} setBusy={setBusy} userId={user.id}
+            onHash={(path, phash) => setHashes((prev) => ({ ...prev, [path]: phash }))} />
+          {reasons.length > 0 && (
+            <div className="border rounded-xl p-3 space-y-1 bg-destructive/5 border-destructive/30">
+              <div className="text-sm font-semibold text-destructive">Photo authenticity check</div>
+              {reasons.map((r, i) => (
+                <div key={i} className="text-xs text-muted-foreground">
+                  <span className={r.level === 'block' ? 'text-destructive font-medium' : 'font-medium'}>
+                    {r.level === 'block' ? 'Blocked: ' : 'Warning: '}
+                  </span>{r.message}
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button type="submit" disabled={busy || screening}>
+              {screening ? 'Checking photos…' : busy ? 'Saving…' : 'Submit for review'}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
