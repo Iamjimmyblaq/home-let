@@ -356,8 +356,17 @@ const AdminDashboard = () => {
                   <div className="flex-1">
                     <div className="font-medium text-sm">{p.title}</div>
                     <div className="text-xs text-muted-foreground">{p.location} · {p.type} · {naira(Number(p.price))}</div>
+                    {Array.isArray((p as any).fraud_flags) && (p as any).fraud_flags.length > 0 && (
+                      <div className="mt-1 space-y-0.5">
+                        {(p as any).fraud_flags.map((fl: any, i: number) => (
+                          <div key={i} className="text-xs text-destructive">⚠ {fl.message}</div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <Badge variant="secondary">Pending</Badge>
+                  {Array.isArray((p as any).fraud_flags) && (p as any).fraud_flags.length > 0
+                    ? <Badge variant="destructive">Photo flag</Badge>
+                    : <Badge variant="secondary">Pending</Badge>}
                   <Link to={`/property/${p.id}`} target="_blank" className="inline-flex"><Button size="sm" variant="outline"><Eye className="h-4 w-4" />View</Button></Link>
                   <Button variant="outline" size="sm" onClick={() => decideListing(p.id, false)}><X className="h-4 w-4" />Reject</Button>
                   <Button size="sm" onClick={() => decideListing(p.id, true)}><Check className="h-4 w-4" />Approve</Button>

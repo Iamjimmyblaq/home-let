@@ -328,6 +328,41 @@ export type Database = {
           },
         ]
       }
+      listing_image_fingerprints: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          image_path: string
+          listing_id: string | null
+          phash: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          image_path: string
+          listing_id?: string | null
+          phash: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          image_path?: string
+          listing_id?: string | null
+          phash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_image_fingerprints_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_unavailability: {
         Row: {
           created_at: string
@@ -384,6 +419,7 @@ export type Database = {
           description: string | null
           extra_fees: Json
           featured: boolean
+          fraud_flags: Json
           id: string
           images: string[] | null
           latitude: number | null
@@ -418,6 +454,7 @@ export type Database = {
           description?: string | null
           extra_fees?: Json
           featured?: boolean
+          fraud_flags?: Json
           id?: string
           images?: string[] | null
           latitude?: number | null
@@ -452,6 +489,7 @@ export type Database = {
           description?: string | null
           extra_fees?: Json
           featured?: boolean
+          fraud_flags?: Json
           id?: string
           images?: string[] | null
           latitude?: number | null
