@@ -119,7 +119,7 @@ export const AgentProfile = () => {
           name: p.full_name || p.username || 'Agent', username: p.username,
           agency: p.agency_name || 'Independent',
           avatar: p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || 'A')}`,
-          bio: p.bio || 'Verified Home-let agent.', phone: p.phone || '',
+          bio: p.bio || 'Verified Home-let agent.', phone: '',
           verified: p.kyc_status === 'verified', rating: Number(p.agent_rating || 4.6), reviews: Number(p.agent_reviews || 0), listings: 0,
         });
       }

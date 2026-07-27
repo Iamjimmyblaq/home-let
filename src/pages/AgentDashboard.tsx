@@ -44,7 +44,8 @@ const KYCBanner = () => {
     const path = `${user.id}/${Date.now()}-${file.name}`;
     const { error: upErr } = await supabase.storage.from('kyc-docs').upload(path, file, { upsert: true });
     if (upErr) { toast.error(upErr.message); setBusy(false); return; }
-    await supabase.from('profiles').update({ kyc_status: 'pending', kyc_doc_url: path }).eq('user_id', user.id);
+    await supabase.from('profiles_private').upsert({ user_id: user.id, kyc_doc_url: path }, { onConflict: 'user_id' });
+    await supabase.from('profiles').update({ kyc_status: 'pending' }).eq('user_id', user.id);
     await refresh();
     setBusy(false);
     toast.success('KYC submitted — admin will review shortly.');
@@ -95,7 +96,9 @@ const AgentProfileForm = () => {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.from('profiles').update(f).eq('user_id', user.id);
+    const { phone, ...pub } = f;
+    const { error } = await supabase.from('profiles').update(pub).eq('user_id', user.id);
+    if (!error) await supabase.from('profiles_private').upsert({ user_id: user.id, phone: phone || null }, { onConflict: 'user_id' });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     await refresh();

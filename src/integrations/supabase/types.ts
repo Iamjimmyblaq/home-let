@@ -544,9 +544,7 @@ export type Database = {
           dispute_lien_until: string | null
           full_name: string | null
           id: string
-          kyc_doc_url: string | null
           kyc_status: string
-          phone: string | null
           terms_accepted_at: string | null
           updated_at: string
           user_id: string
@@ -562,9 +560,7 @@ export type Database = {
           dispute_lien_until?: string | null
           full_name?: string | null
           id?: string
-          kyc_doc_url?: string | null
           kyc_status?: string
-          phone?: string | null
           terms_accepted_at?: string | null
           updated_at?: string
           user_id: string
@@ -580,13 +576,35 @@ export type Database = {
           dispute_lien_until?: string | null
           full_name?: string | null
           id?: string
-          kyc_doc_url?: string | null
           kyc_status?: string
-          phone?: string | null
           terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          created_at: string
+          kyc_doc_url: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          kyc_doc_url?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          kyc_doc_url?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
