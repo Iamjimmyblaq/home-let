@@ -2,6 +2,7 @@ import { Layout } from '@/components/Layout';
 import { Link } from 'react-router-dom';
 import { Building2, Calendar, Eye, Plus, TrendingUp, Wallet, ShieldCheck, Trash2, Edit, Rocket, Sparkles, MessageSquare } from 'lucide-react';
 import { naira, shortNaira } from '@/lib/format';
+import { computeImageHash } from '@/lib/imageHash';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
