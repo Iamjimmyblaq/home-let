@@ -96,7 +96,9 @@ const AgentProfileForm = () => {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.from('profiles').update(f).eq('user_id', user.id);
+    const { phone, ...pub } = f;
+    const { error } = await supabase.from('profiles').update(pub).eq('user_id', user.id);
+    if (!error) await supabase.from('profiles_private').upsert({ user_id: user.id, phone: phone || null }, { onConflict: 'user_id' });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     await refresh();
