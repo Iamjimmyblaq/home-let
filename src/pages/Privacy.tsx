@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { Lock } from 'lucide-react';
 
 const SECTIONS: { h: string; p: string[] }[] = [
@@ -32,6 +33,11 @@ const SECTIONS: { h: string; p: string[] }[] = [
 
 const Privacy = () => (
   <Layout>
+    <Seo
+      title="Privacy Policy — Home-let"
+      description="How Home-let collects, stores and protects your personal information and KYC documents."
+      path="/privacy"
+    />
     <div className="container py-10 max-w-3xl">
       <div className="flex items-center gap-3 mb-2">
         <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Lock className="h-6 w-6" /></div>

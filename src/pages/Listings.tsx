@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,11 @@ const Listings = () => {
 
   return (
     <Layout>
+    <Seo
+      title="Browse Property Listings in Nigeria — Home-let"
+      description="Search verified houses, flats, land and hostels for rent or for sale across every Nigerian state on Home-let."
+      path="/listings"
+    />
       <div className="bg-secondary/40 border-b">
         <div className="container py-8">
           <h1 className="text-3xl font-bold mb-1">Find your next home</h1>

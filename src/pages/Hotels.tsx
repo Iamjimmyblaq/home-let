@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { Link } from 'react-router-dom';
 import { hotels } from '@/data/seed';
 import { naira } from '@/lib/format';
@@ -11,6 +12,11 @@ import { Calendar, Search } from 'lucide-react';
 const Hotels = () => {
   return (
     <Layout>
+    <Seo
+      title="Book Hotels & Short Stays in Nigeria — Home-let"
+      description="Compare hotel rooms and short-stay accommodation across Nigeria with escrow-protected booking on Home-let."
+      path="/hotels"
+    />
       <section className="gradient-hero text-primary-foreground py-16">
         <div className="container">
           <h1 className="text-4xl font-bold mb-2">Hotels & short-let stays</h1>
