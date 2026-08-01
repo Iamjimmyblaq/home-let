@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +41,11 @@ const Contact = () => {
 
   return (
     <Layout>
+    <Seo
+      title="Contact Home-let — Enquiries & Support"
+      description="Reach Home-let for general enquiries at hello@home-let.com or complaints and disputes at support@home-let.com."
+      path="/contact"
+    />
       <div className="container py-16 grid lg:grid-cols-2 gap-12">
         <div>
           <h1 className="text-4xl font-bold mb-3">Get in touch</h1>

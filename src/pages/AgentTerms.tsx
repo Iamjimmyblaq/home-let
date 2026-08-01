@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { ShieldCheck } from 'lucide-react';
 
 export const AGENT_TERMS = [
@@ -14,6 +15,11 @@ export const AGENT_TERMS = [
 
 const AgentTerms = () => (
   <Layout>
+    <Seo
+      title="Agent & Landlord Terms — Home-let"
+      description="Obligations for agents and landlords listing property on Home-let, including KYC, payouts and dispute handling."
+      path="/agent-terms"
+    />
     <div className="container py-10 max-w-3xl">
       <div className="flex items-center gap-3 mb-6">
         <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><ShieldCheck className="h-6 w-6" /></div>

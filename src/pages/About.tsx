@@ -1,10 +1,16 @@
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, Eye, Wallet, Users, Building2, Handshake, Target, HeartHandshake } from 'lucide-react';
 
 const About = () => (
   <Layout>
+    <Seo
+      title="About Home-let — Safer Property Deals in Nigeria"
+      description="How Home-let uses KYC-verified agents, escrow payments and photo screening to make Nigerian property deals safe."
+      path="/about"
+    />
     <section className="gradient-hero text-primary-foreground">
       <div className="container py-16 md:py-24 max-w-4xl">
         <p className="text-accent font-medium mb-3 text-sm uppercase tracking-wide">About Home-let</p>

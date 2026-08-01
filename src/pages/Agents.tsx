@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { Seo, SITE_URL } from '@/components/Seo';
 import { agents as seedAgents } from '@/data/seed';
 import { seedUnified } from '@/data/seedUnified';
 import { Link, useParams } from 'react-router-dom';
@@ -72,6 +73,11 @@ export const Agents = () => {
   const { items, loading } = useAgentList();
   return (
     <Layout>
+      <Seo
+        title="Verified Real Estate Agents & Landlords — Home-let"
+        description="Browse KYC-verified estate agents and landlords in Nigeria, ranked by rating and reviews, on Home-let."
+        path="/agents"
+      />
       <div className="container py-12">
         <h1 className="text-3xl font-bold mb-2">Verified agents & landlords</h1>
         <p className="text-muted-foreground mb-8">Ranked by rating. Every Home-let agent passes KYC, ID verification, and reference checks.</p>
@@ -146,6 +152,23 @@ export const AgentProfile = () => {
 
   return (
     <Layout>
+      <Seo
+        title={`${a.name} — Verified Agent on Home-let`}
+        description={`${a.name}${a.agency ? ` of ${a.agency}` : ''} — ${a.rating.toFixed(1)}★ from ${a.reviews} reviews and ${allListings.length} listings on Home-let.`}
+        path={`/agent-profile/${a.id}`}
+        image={a.avatar}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'RealEstateAgent',
+          name: a.name,
+          image: a.avatar,
+          url: `${SITE_URL}/agent-profile/${a.id}`,
+          worksFor: a.agency || undefined,
+          aggregateRating: a.reviews
+            ? { '@type': 'AggregateRating', ratingValue: a.rating, reviewCount: a.reviews }
+            : undefined,
+        }}
+      />
       <div className="gradient-hero text-primary-foreground">
         <div className="container py-12 flex flex-col md:flex-row items-start md:items-center gap-6">
           <img src={a.avatar} alt={a.name} className="h-24 w-24 rounded-2xl object-cover ring-4 ring-white/30" />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, ShieldCheck, Wallet, Eye, Star, ArrowRight, Building2, KeyRound, Hotel, Trees, School } from 'lucide-react';
@@ -15,6 +16,31 @@ const Index = () => {
 
   return (
     <Layout>
+    <Seo
+      title="Home-let — Rent, Buy & Short-let Homes in Nigeria"
+      description="Find verified homes, short-lets, hotels, land and hostels across Nigeria. Escrow-protected payments and 360° virtual tours."
+      path="/"
+      jsonLd={[
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Home-let',
+          url: 'https://home-let.lovable.app/',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: 'https://home-let.lovable.app/listings?q={search_term_string}',
+            'query-input': 'required name=search_term_string',
+          },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'Home-let',
+          url: 'https://home-let.lovable.app/',
+          areaServed: 'NG',
+        },
+      ]}
+    />
       {/* HERO */}
       <section className="relative overflow-hidden gradient-hero text-primary-foreground">
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, hsl(41 96% 52% / 0.4), transparent 40%), radial-gradient(circle at 80% 60%, hsl(218 89% 52% / 0.5), transparent 50%)' }} />

@@ -1,4 +1,5 @@
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { HelpCircle, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -27,6 +28,20 @@ const SAFETY = [
 
 const Faq = () => (
   <Layout>
+    <Seo
+      title="Frequently Asked Questions — Home-let"
+      description="Answers about inspections, escrow, caution deposits, disputes, agent verification and listing boosts on Home-let."
+      path="/faq"
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: FAQS.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }}
+    />
     <div className="container py-10 max-w-3xl">
       <div className="flex items-center gap-3 mb-8">
         <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><HelpCircle className="h-6 w-6" /></div>
