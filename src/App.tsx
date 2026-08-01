@@ -26,6 +26,8 @@ import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Faq from "./pages/Faq";
+import SafeRenting from "./pages/SafeRenting";
+
 
 import { RoleRouter } from "./components/RoleRouter";
 
@@ -53,6 +55,8 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/faq" element={<Faq />} />
+            <Route path="/guides/safe-renting-nigeria" element={<SafeRenting />} />
+
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
