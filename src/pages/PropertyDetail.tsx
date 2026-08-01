@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
+import { Seo, SITE_URL } from '@/components/Seo';
 import { naira } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,38 @@ const PropertyDetail = () => {
 
   return (
     <Layout>
+      <Seo
+        title={`${p.title} — ${p.location || p.city || 'Nigeria'} | Home-let`.slice(0, 65)}
+        description={(p.description || `${p.title} in ${[p.location, p.city, p.state].filter(Boolean).join(', ')} for ${naira(p.price)} on Home-let.`).slice(0, 158)}
+        path={`/property/${p.id}`}
+        image={p.image}
+        type="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Accommodation',
+          name: p.title,
+          description: p.description || undefined,
+          image: p.gallery?.length ? p.gallery : p.image,
+          url: `${SITE_URL}/property/${p.id}`,
+          numberOfBedrooms: p.beds || undefined,
+          numberOfBathroomsTotal: p.baths || undefined,
+          floorSize: p.sqm ? { '@type': 'QuantitativeValue', value: p.sqm, unitCode: 'MTK' } : undefined,
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: p.location || undefined,
+            addressLocality: p.city || undefined,
+            addressRegion: p.state || undefined,
+            addressCountry: 'NG',
+          },
+          offers: {
+            '@type': 'Offer',
+            price: p.price,
+            priceCurrency: 'NGN',
+            availability: 'https://schema.org/InStock',
+            url: `${SITE_URL}/property/${p.id}`,
+          },
+        }}
+      />
       <div className="container py-6">
         <div className="text-sm text-muted-foreground mb-3">
           <Link to="/" className="hover:text-foreground">Home</Link> / <Link to="/listings" className="hover:text-foreground">Listings</Link> / <span className="text-foreground">{p.title}</span>
