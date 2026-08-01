@@ -20,7 +20,7 @@ const PropertyDetail = () => {
   if (loading) return <Layout><div className="container py-20 text-center">Loading…</div></Layout>;
   if (!p) return <Layout><div className="container py-20 text-center">Property not found.</div></Layout>;
 
-  const priceLabel = p.type === 'rent' ? `${naira(p.price)}/year` : p.type === 'shortlet' ? `${naira(p.price)}/night` : naira(p.price);
+  const priceLabel = p.type === 'rent' || p.type === 'hostel' ? `${naira(p.price)}/year` : p.type === 'shortlet' ? `${naira(p.price)}/night` : naira(p.price);
   const hasCoords = typeof p.latitude === 'number' && typeof p.longitude === 'number';
   // Google Maps satellite (Google Earth-style) embed — works without API key.
   const mapQuery = hasCoords

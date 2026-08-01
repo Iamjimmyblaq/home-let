@@ -139,6 +139,13 @@ const POPULAR = {
     ['Short lets in Port Harcourt', '/listings?type=shortlet&q=Port Harcourt'],
     ['Hotels in Nigeria', '/hotels'],
   ],
+  'Land & hostels': [
+    ['Land for sale in Lagos', '/listings?type=land&q=Lagos'],
+    ['Land for sale in Abuja', '/listings?type=land&q=Abuja'],
+    ['Plots & acres nationwide', '/listings?type=land'],
+    ['Student hostels near campus', '/listings?type=hostel'],
+    ['Hostels in Lagos', '/listings?type=hostel&q=Lagos'],
+  ],
   'Popular locations': [
     ['Property in Lagos', '/listings?q=Lagos'],
     ['Property in Abuja', '/listings?q=Abuja'],
@@ -181,6 +188,8 @@ export const Footer = () => (
           <li><Link to="/listings?type=rent">Rent</Link></li>
           <li><Link to="/listings?type=shortlet">Short-let</Link></li>
           <li><Link to="/hotels">Hotels</Link></li>
+          <li><Link to="/listings?type=land">Land</Link></li>
+          <li><Link to="/listings?type=hostel">Hostels</Link></li>
           <li><Link to="/agents">Agents</Link></li>
         </ul>
       </div>
