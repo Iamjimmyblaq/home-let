@@ -1,0 +1,22 @@
+# Home-let
+
+> Nigeria's escrow-protected real estate platform for renting, buying, short-lets, hotels, land and hostels, with verified agents and 360° virtual tours.
+
+Home-let connects renters, buyers and travellers with KYC-verified agents and landlords across Nigeria. Payments for inspections, bookings and caution deposits are held in escrow until both sides confirm, and every listing is screened for duplicate or reused photos before it goes live.
+
+## Pages
+
+- [Home](/): Search verified properties, short-lets, hotels, land and hostels across Nigeria.
+- [Listings](/listings): Browse and filter properties for rent and for sale.
+- [Hotels](/hotels): Book hotel rooms and short-stay accommodation.
+- [Agents](/agents): Directory of verified agents and landlords, ranked by rating.
+- [Safe renting guide](/guides/safe-renting-nigeria): How to verify a property and avoid rental scams in Nigeria.
+- [About](/about): How Home-let and its escrow protection work.
+- [FAQ](/faq): Common questions about inspections, escrow, disputes and boosting.
+- [Contact](/contact): Reach the enquiries and support teams.
+
+## Optional
+
+- [Terms of Service](/terms): Platform rules for users, agents and landlords.
+- [Privacy Policy](/privacy): How personal and KYC data is handled.
+- [Agent terms](/agent-terms): Obligations for listing agents and landlords.
