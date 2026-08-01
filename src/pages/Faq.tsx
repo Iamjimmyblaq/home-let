@@ -32,6 +32,15 @@ const Faq = () => (
       title="Frequently Asked Questions — Home-let"
       description="Answers about inspections, escrow, caution deposits, disputes, agent verification and listing boosts on Home-let."
       path="/faq"
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: FAQS.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }}
     />
     <div className="container py-10 max-w-3xl">
       <div className="flex items-center gap-3 mb-8">
