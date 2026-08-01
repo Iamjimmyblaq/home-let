@@ -50,6 +50,8 @@ export const Navbar = () => {
         <nav className="hidden md:flex items-center gap-6">
           <NavLink to="/listings" className={linkCls}>Buy / Rent</NavLink>
           <NavLink to="/hotels" className={linkCls}>Hotels & Short-let</NavLink>
+          <NavLink to="/listings?type=land" className={linkCls}>Land</NavLink>
+          <NavLink to="/listings?type=hostel" className={linkCls}>Hostels</NavLink>
           <NavLink to="/agents" className={linkCls}>Agents</NavLink>
           <NavLink to="/about" className={linkCls}>About</NavLink>
           <NavLink to="/contact" className={linkCls}>Contact</NavLink>
