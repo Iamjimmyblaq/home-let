@@ -7,7 +7,7 @@ export type DbListing = {
   agent_id: string;
   title: string;
   description: string | null;
-  type: 'rent' | 'sale' | 'shortlet' | 'hotel';
+  type: 'rent' | 'sale' | 'shortlet' | 'hotel' | 'land' | 'hostel';
   category: string | null;
   price: number;
   bedrooms: number;
@@ -37,7 +37,7 @@ export type UnifiedProperty = {
   id: string;
   source: 'seed' | 'db';
   title: string;
-  type: 'rent' | 'sale' | 'shortlet' | 'hotel';
+  type: 'rent' | 'sale' | 'shortlet' | 'hotel' | 'land' | 'hostel';
   price: number;
   location: string;
   city: string;

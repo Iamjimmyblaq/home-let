@@ -235,6 +235,8 @@ const ListingFormFields = ({ f, setF, images, setImages, busy, setBusy, userId, 
               <SelectItem value="sale">For Sale</SelectItem>
               <SelectItem value="shortlet">Short-let</SelectItem>
               <SelectItem value="hotel">Hotel</SelectItem>
+              <SelectItem value="land">Land</SelectItem>
+              <SelectItem value="hostel">Hostel</SelectItem>
             </SelectContent>
           </Select>
         </div>

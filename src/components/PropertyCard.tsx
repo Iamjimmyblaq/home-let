@@ -10,7 +10,7 @@ export const PropertyCard = ({ p }: { p: UnifiedProperty }) => {
   const fav = favorites.includes(p.id);
 
   const priceLabel =
-    p.type === 'rent' ? `${shortNaira(p.price)}/yr` : p.type === 'shortlet' ? `${shortNaira(p.price)}/night` : shortNaira(p.price);
+    p.type === 'rent' || p.type === 'hostel' ? `${shortNaira(p.price)}/yr` : p.type === 'shortlet' ? `${shortNaira(p.price)}/night` : shortNaira(p.price);
 
   return (
     <Link to={`/property/${p.id}`} className="group rounded-2xl overflow-hidden bg-card border shadow-soft hover:shadow-elegant transition-all">

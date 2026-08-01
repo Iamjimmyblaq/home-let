@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, ShieldCheck, Wallet, Eye, Star, ArrowRight, Building2, KeyRound, Hotel } from 'lucide-react';
+import { Search, ShieldCheck, Wallet, Eye, Star, ArrowRight, Building2, KeyRound, Hotel, Trees, School } from 'lucide-react';
 import { seedUnified } from '@/data/seedUnified';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useState } from 'react';
@@ -49,7 +49,7 @@ const Index = () => {
             </form>
 
             <div className="flex flex-wrap gap-2 mt-4">
-              {['Buy', 'Rent', 'Short-let', 'Hotels', 'Lagos', 'Abuja', 'Verified'].map((t) => (
+              {['Buy', 'Rent', 'Short-let', 'Hotels', 'Land', 'Hostel', 'Lagos', 'Abuja', 'Verified'].map((t) => (
                 <button key={t} onClick={() => navigate(`/listings?q=${t}`)} className="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
                   {t}
                 </button>
@@ -61,12 +61,14 @@ const Index = () => {
 
       {/* QUICK CATEGORIES */}
       <section className="container -mt-10 relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { icon: Building2, label: 'Buy a home', sub: '1,200+ homes', href: '/listings?type=sale' },
             { icon: KeyRound, label: 'Rent yearly', sub: '3,400+ flats', href: '/listings?type=rent' },
             { icon: Hotel, label: 'Short-let', sub: '850+ stays', href: '/listings?type=shortlet' },
             { icon: Hotel, label: 'Hotels', sub: '200+ partners', href: '/hotels' },
+            { icon: Trees, label: 'Land', sub: 'Plots & acres', href: '/listings?type=land' },
+            { icon: School, label: 'Hostels', sub: 'Student stays', href: '/listings?type=hostel' },
           ].map((c) => (
             <Link key={c.label} to={c.href} className="bg-card p-5 rounded-2xl border shadow-soft hover:shadow-elegant hover:-translate-y-1 transition-all">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><c.icon className="h-5 w-5 text-primary" /></div>
