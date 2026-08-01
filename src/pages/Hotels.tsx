@@ -16,6 +16,28 @@ const Hotels = () => {
       title="Book Hotels & Short Stays in Nigeria — Home-let"
       description="Compare hotel rooms and short-stay accommodation across Nigeria with escrow-protected booking on Home-let."
       path="/hotels"
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Hotels and short stays in Nigeria',
+        itemListElement: hotels.map((h, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'Hotel',
+            name: h.name,
+            image: h.image,
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: h.location,
+              addressLocality: h.city,
+              addressCountry: 'NG',
+            },
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: h.rating, ratingCount: 1 },
+            priceRange: `NGN ${h.pricePerNight} per night`,
+          },
+        })),
+      }}
     />
       <section className="gradient-hero text-primary-foreground py-16">
         <div className="container">
