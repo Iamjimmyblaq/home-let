@@ -130,10 +130,10 @@ export const properties: Property[] = [
 ];
 
 export const hotels: Hotel[] = [
-  { id: 'h1', name: 'The Lagoon Suites', location: 'Victoria Island', city: 'Lagos', pricePerNight: 75_000, rating: 4.6, image: img('1566073771259-6a8506099945'), gallery: ['1566073771259-6a8506099945','1582719478250-c89cae4dc85b','1590490360182-c33d57733427','1631049307264-da0ec9d70304'].map(img), amenities: ['Pool', 'Spa', 'Gym', 'Restaurant'] },
-  { id: 'h2', name: 'Aso Rock Boutique', location: 'Maitama', city: 'Abuja', pricePerNight: 62_000, rating: 4.4, image: img('1542314831-068cd1dbfeeb'), gallery: ['1542314831-068cd1dbfeeb','1611892440504-42a792e24d32','1596394516093-501ba68a0ba6','1618773928121-c32242e63f39'].map(img), amenities: ['Wi-Fi', 'Breakfast', 'Bar'] },
-  { id: 'h3', name: 'Ocean Pearl Resort', location: 'Ibeju-Lekki', city: 'Lagos', pricePerNight: 145_000, rating: 4.8, image: img('1571003123894-1f0594d2b5d9'), gallery: ['1571003123894-1f0594d2b5d9','1584132967334-10e028bd69f7','1520250497591-112f2f40a3f4','1540541338287-41700207dee6'].map(img), amenities: ['Beach', 'Pool', 'Spa', 'Bar'] },
-  { id: 'h4', name: 'Garden City Inn', location: 'GRA', city: 'Port Harcourt', pricePerNight: 38_000, rating: 4.1, image: img('1551882547-ff40c63fe5fa'), gallery: ['1551882547-ff40c63fe5fa','1578683010236-d716f9a3f461','1560448204-e02f11c3d0e2','1560185007-cde436f6a4d0'].map(img), amenities: ['Wi-Fi', 'Parking', 'Restaurant'] },
+  { id: 'h1', name: 'The Lagoon Suites', location: 'Victoria Island', city: 'Lagos', pricePerNight: 75_000, rating: 4.6, image: img('1566073771259-6a8506099945'), gallery: ['1566073771259-6a8506099945','1582719478250-c89cae4dc85b','1590490360182-c33d57733427','1631049307264-da0ec9d70304'].map((s) => img(s)), amenities: ['Pool', 'Spa', 'Gym', 'Restaurant'] },
+  { id: 'h2', name: 'Aso Rock Boutique', location: 'Maitama', city: 'Abuja', pricePerNight: 62_000, rating: 4.4, image: img('1542314831-068cd1dbfeeb'), gallery: ['1542314831-068cd1dbfeeb','1611892440504-42a792e24d32','1596394516093-501ba68a0ba6','1618773928121-c32242e63f39'].map((s) => img(s)), amenities: ['Wi-Fi', 'Breakfast', 'Bar'] },
+  { id: 'h3', name: 'Ocean Pearl Resort', location: 'Ibeju-Lekki', city: 'Lagos', pricePerNight: 145_000, rating: 4.8, image: img('1571003123894-1f0594d2b5d9'), gallery: ['1571003123894-1f0594d2b5d9','1584132967334-10e028bd69f7','1520250497591-112f2f40a3f4','1540541338287-41700207dee6'].map((s) => img(s)), amenities: ['Beach', 'Pool', 'Spa', 'Bar'] },
+  { id: 'h4', name: 'Garden City Inn', location: 'GRA', city: 'Port Harcourt', pricePerNight: 38_000, rating: 4.1, image: img('1551882547-ff40c63fe5fa'), gallery: ['1551882547-ff40c63fe5fa','1578683010236-d716f9a3f461','1560448204-e02f11c3d0e2','1560185007-cde436f6a4d0'].map((s) => img(s)), amenities: ['Wi-Fi', 'Parking', 'Restaurant'] },
 ];
 
 export const seedTransactions = [
