@@ -90,8 +90,8 @@ const PropertyDetail = () => {
             <img src={p.gallery[active] || p.image} alt={p.title} draggable={false} className="w-full h-full object-cover select-none" />
             <div className="absolute bottom-3 right-3 text-white/80 text-[10px] tracking-widest uppercase drop-shadow">Home-let</div>
           </div>
-          <div className="grid grid-cols-4 md:grid-cols-1 gap-3">
-            {p.gallery.slice(0, 4).map((g, i) => (
+          <div className="grid grid-cols-4 md:grid-cols-1 gap-3 md:max-h-[calc(100%)] md:overflow-y-auto">
+            {p.gallery.map((g, i) => (
               <button key={i} onClick={() => setActive(i)} className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${active === i ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'}`}>
                 <img src={g} alt="" draggable={false} className="w-full h-full object-cover select-none" />
               </button>
