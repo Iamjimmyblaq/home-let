@@ -24,6 +24,7 @@ const Booking = () => {
   const [checkout, setCheckout] = useState('');
   const [guests, setGuests] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
   const [blocked, setBlocked] = useState<{ start_date: string; end_date: string }[]>([]);
 
   useEffect(() => {
@@ -34,14 +35,14 @@ const Booking = () => {
 
   const item = listing
     ? {
-        title: listing.title, image: listing.image, location: listing.location, price: listing.price,
+        title: listing.title, image: listing.image, gallery: (listing.gallery?.length ? listing.gallery : [listing.image]), location: listing.location, price: listing.price,
         isStay: listing.type === 'shortlet' || listing.type === 'hotel',
         agentId: listing.agentId, dbId: listing.source === 'db' ? listing.id : null,
         extraFees: listing.extraFees || [],
         cautionFee: Number(listing.cautionFee || 0),
       }
     : hotel
-    ? { title: hotel.name, image: hotel.image, location: hotel.location, price: hotel.pricePerNight, isStay: true, agentId: null as string | null, dbId: null, extraFees: [], cautionFee: 0 }
+    ? { title: hotel.name, image: hotel.image, gallery: (hotel.gallery?.length ? hotel.gallery : [hotel.image]), location: hotel.location, price: hotel.pricePerNight, isStay: true, agentId: null as string | null, dbId: null, extraFees: [], cautionFee: 0 }
     : null;
 
   if (!item) return <Layout><div className="container py-20 text-center">Not found.</div></Layout>;
@@ -115,7 +116,19 @@ const Booking = () => {
           </div>
         </div>
         <div className="bg-card border rounded-2xl p-6 h-fit">
-          <img src={item.image} className="w-full aspect-video object-cover rounded-xl mb-4" />
+          <div className="mb-4" onContextMenu={(e) => e.preventDefault()}>
+            <img src={item.gallery[Math.min(activeImg, item.gallery.length - 1)]} alt={item.title} draggable={false} className="w-full aspect-video object-cover rounded-xl select-none" />
+            {item.gallery.length > 1 && (
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                {item.gallery.map((g, i) => (
+                  <button key={i} onClick={() => setActiveImg(i)} aria-label={`Photo ${i + 1}`}
+                    className={`h-14 w-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${i === activeImg ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+                    <img src={g} alt="" draggable={false} className="h-full w-full object-cover select-none" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <h3 className="font-semibold mb-1">{item.title}</h3>
           <div className="text-xs text-muted-foreground mb-4">{item.location}</div>
           <div className="space-y-2 text-sm border-t pt-3">
