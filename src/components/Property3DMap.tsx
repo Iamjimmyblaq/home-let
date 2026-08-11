@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import maplibregl, { Map as MlMap } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import type { Map as MlMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Button } from '@/components/ui/button';
 import { Building2, Satellite, RotateCw, Compass } from 'lucide-react';
