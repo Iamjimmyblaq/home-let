@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Seo, SITE_URL } from '@/components/Seo';
+import { Property3DMap } from '@/components/Property3DMap';
 import { naira } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
