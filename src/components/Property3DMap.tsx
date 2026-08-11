@@ -95,7 +95,7 @@ export const Property3DMap = ({ lat, lng, title, zoom = 17 }: Props) => {
     const m = map.current;
     if (!m || next === mode) return;
     setMode(next);
-    m.setStyle(next === '3d' ? STREET_STYLE : satelliteStyle());
+    m.setStyle(next === '3d' ? STREET_STYLE : satelliteStyle(), { diff: false });
     m.once('styledata', () => {
       m.easeTo({ pitch: 65, bearing: m.getBearing(), duration: 600 });
     });
