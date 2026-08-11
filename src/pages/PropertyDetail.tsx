@@ -178,14 +178,10 @@ const PropertyDetail = () => {
                 </a>
               </div>
               {hasCoords ? (
-                <iframe
-                  title={`Satellite map for ${p.title}`}
-                  src={mapSrc}
-                  className="w-full aspect-[16/9] rounded-2xl border bg-muted"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
-                />
+                <>
+                  <Property3DMap lat={p.latitude as number} lng={p.longitude as number} title={p.title} />
+                  <p className="text-xs text-muted-foreground mt-2">Drag to pan, right-drag (or two fingers) to tilt and rotate for a full 3D view of the neighbourhood.</p>
+                </>
               ) : (
                 <iframe
                   title={`Map search for ${p.title}`}
@@ -197,6 +193,7 @@ const PropertyDetail = () => {
               )}
 
             </div>
+
           </div>
 
           <div className="space-y-4">
