@@ -108,3 +108,46 @@ The project is deployed through Lovable. Connect a GitHub repository via the Lov
 ## License
 
 Copyright © Home-Let. All rights reserved.
+
+## Deploying outside Lovable (Vercel, Netlify, any static host)
+
+The app is a standard Vite SPA — nothing is tied to Lovable except the optional
+hosted OAuth helper, which now falls back automatically to standard Supabase
+OAuth on non-Lovable hosts.
+
+### 1. Environment variables
+
+Copy `.env.example` and set these in your host's project settings (they are
+browser-safe; data is protected by Row Level Security):
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
+
+Without them the app boots into a "Backend configuration missing" screen instead
+of failing silently — that's the usual cause of a "shell only, no backend" deploy.
+
+### 2. Build settings
+
+`vercel.json` is included: framework `vite`, build `npm run build`, output `dist`,
+plus SPA rewrites so deep links and refreshes work.
+
+### 3. Auth redirect URLs
+
+In the backend auth settings add your deployed origins to **Site URL** and
+**Redirect URLs**:
+
+- `https://your-app.vercel.app`
+- `https://your-app.vercel.app/**`
+- your custom domain (same two entries)
+
+For Google sign-in also add `https://<project-ref>.supabase.co/auth/v1/callback`
+as an authorized redirect URI in the Google Cloud OAuth client.
+
+Missing entries are why Google sign-in and existing-account logins error out on
+a fresh Vercel deployment.
+
+### 4. Backend
+
+Database, auth, storage and edge functions are hosted by the backend project and
+are reachable from any origin — no extra deployment step is needed for them.

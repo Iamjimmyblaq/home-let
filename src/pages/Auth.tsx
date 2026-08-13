@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Home as HomeIcon, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
+import { signInWithProvider } from '@/lib/oauth';
 import { AppRole } from '@/contexts/AuthContext';
 
 const roleRedirect = async (): Promise<string> => {
@@ -26,7 +26,7 @@ const roleRedirect = async (): Promise<string> => {
 
 const SocialButtons = () => {
   const oauth = async (provider: 'google' | 'apple') => {
-    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    const result = await signInWithProvider(provider);
     if (result.error) { toast.error(result.error.message || 'Sign-in failed'); return; }
     if (result.redirected) return;
     window.location.href = await roleRedirect();
